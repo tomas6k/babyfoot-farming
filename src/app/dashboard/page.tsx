@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import DashboardClient from "./DashboardClient";
 import { getPlayerStats } from "@/lib/getPlayerStats";
 import { type PlayerStats } from "@/types/supabase";
@@ -11,10 +11,7 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
   throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is required");
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+const supabase = getSupabaseClient();
 
 export default async function DashboardPage() {
   // Obtenir le mois actuel au format YYYY-MM

@@ -1,10 +1,7 @@
 import { createClient, PostgrestError } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = getSupabaseClient();
 
 interface Player {
   id: string;

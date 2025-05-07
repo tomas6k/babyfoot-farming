@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,10 +25,7 @@ import { usePlayersLevel } from "@/lib/hooks/usePlayersLevel";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = getSupabaseClient();
 
 interface PlayerStats {
   [key: string]: {

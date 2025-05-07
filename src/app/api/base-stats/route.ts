@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import { NextResponse } from 'next/server';
 
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
@@ -9,10 +9,10 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
   throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+
+const supabase = getSupabaseClient();
 
 export async function GET(request: Request) {
   try {

@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import type { Database } from "@/types/supabase";
 
 // Vérifier que les variables d'environnement sont définies
