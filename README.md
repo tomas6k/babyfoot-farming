@@ -186,4 +186,3 @@ USING (true);
 3. Achievements
 4. Mode spectateur
 5. Statistiques avancées
-
