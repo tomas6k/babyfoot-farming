@@ -1,7 +1,9 @@
 module.exports = {
   extends: ['next/core-web-vitals'],
-  parserOptions: {
-    ecmaVersion: 2022,
-    sourceType: 'module'
+  root: true,
+  parser: '@typescript-eslint/parser',
+  plugins: ['@typescript-eslint'],
+  rules: {
+    '@typescript-eslint/no-non-null-assertion': 'error'
   }
 }; 
