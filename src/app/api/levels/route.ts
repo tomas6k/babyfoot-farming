@@ -1,29 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-
-// Vérifier que les variables d'environnement sont définies
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
-}
-if (!supabaseAnonKey) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
-}
-
-console.log('Initializing Supabase client with URL:', supabaseUrl);
-
-const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey
-);
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 export async function GET() {
   console.log('API Route: /api/levels called');
   
   try {
     console.log('Fetching levels from Supabase...');
+    const supabase = getSupabaseClient();
     
     // Récupérer les données depuis la vue levels_with_info
     const { data, error } = await supabase
