@@ -7,7 +7,8 @@
     "build": "node scripts/setup-env.js && next build",
     "start": "next start",
     "lint": "next lint",
-    "netlify-build": "next build && next export"
+    "netlify-build": "next build && next export",
+    "update-supabase": "node scripts/update-supabase-imports.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
