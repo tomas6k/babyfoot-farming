@@ -3,17 +3,15 @@
   publish = ".next"
 
 [build.environment]
-  NEXT_PUBLIC_SUPABASE_URL = ""
-  NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
   NODE_VERSION = "18"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+[functions]
+  external_node_modules = ["@supabase/supabase-js"]
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200
-
-[functions]
-  external_node_modules = ["@supabase/supabase-js"] 
+  status = 200 
