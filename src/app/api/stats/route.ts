@@ -2,18 +2,14 @@ import { getSupabaseClient } from '@/lib/supabaseClient';
 import { NextResponse } from 'next/server';
 
 // Vérifier que les variables d'environnement sont définies
-
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-
-if (!supabaseServiceKey) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
+if (!supabaseServiceKey || !supabaseUrl) {
+  throw new Error('Missing required environment variables');
 }
 
-const supabaseAdmin = createClient(
-  supabaseUrl,
-  supabaseServiceKey
-);
+const supabase = getSupabaseClient();
 
 export async function GET(request: Request) {
   try {
@@ -29,7 +25,7 @@ export async function GET(request: Request) {
     
     // Appeler la fonction get_players_stats avec le mois en paramètre
     console.log('API: Calling get_players_stats with params:', { target_month: formattedDate });
-    const { data, error } = await supabaseAdmin.rpc(
+    const { data, error } = await supabase.rpc(
       'get_players_stats',
       { target_month: formattedDate }
     );
