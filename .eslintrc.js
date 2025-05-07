@@ -1,14 +1,15 @@
 module.exports = {
-  extends: ['next/core-web-vitals'],
-  parserOptions: {
-    project: './tsconfig.json',
-  },
-  settings: {
-    next: {
-      rootDir: '.',
-    },
-  },
+  root: true,
+  extends: [
+    'next/core-web-vitals',
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended'
+  ],
+  parser: '@typescript-eslint/parser',
+  plugins: ['@typescript-eslint'],
   rules: {
-    '@next/next/no-html-link-for-pages': 'off',
-  },
+    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-explicit-any': 'warn',
+    'no-console': ['warn', { allow: ['warn', 'error'] }]
+  }
 }; 

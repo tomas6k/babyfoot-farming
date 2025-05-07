@@ -5,6 +5,7 @@
 [build.environment]
   NEXT_PUBLIC_SUPABASE_URL = ""
   NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
+  NODE_VERSION = "18"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
