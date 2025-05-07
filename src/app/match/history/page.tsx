@@ -37,7 +37,7 @@ export default function HistoryPage() {
   return (
     <div className="px-10 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-pixel">
+        <h1 className="text-3xl font-bold font-pixel mb-4">
           Historique des Matchs
         </h1>
       </div>

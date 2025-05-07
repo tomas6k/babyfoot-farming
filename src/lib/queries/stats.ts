@@ -1,10 +1,7 @@
 import type { Database } from '@/types/supabase';
 import { getSupabaseClient } from '@/lib/supabaseClient';
 
-
-
-
-const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+const supabase = getSupabaseClient();
 
 export interface Partner {
   name: string;

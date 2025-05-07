@@ -1,9 +1,9 @@
-# Guide de Déploiement sur Netlify
+# Guide de Déploiement sur Vercel
 
 ## Prérequis
 
 1. Un compte GitHub avec le projet
-2. Un compte Netlify
+2. Un compte Vercel
 3. Un projet Supabase configuré
 
 ## Configuration du Projet
@@ -29,28 +29,23 @@ const nextConfig = {
 module.exports = nextConfig
 ```
 
-### 2. Configuration de Netlify
+### 2. Configuration de Vercel
 
-Créez un fichier `netlify.toml` à la racine du projet :
+Un fichier `vercel.json` est créé à la racine du projet :
 
-```toml
-[build]
-  command = "npm run build"
-  publish = ".next"
-
-[build.environment]
-  NODE_VERSION = "18"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-[functions]
-  external_node_modules = ["@supabase/supabase-js"]
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+```json
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "",
+    "SUPABASE_SERVICE_ROLE_KEY": ""
+  }
+}
 ```
 
 ### 3. Variables d'Environnement
@@ -64,21 +59,22 @@ Dans votre projet Supabase :
 
 ## Déploiement
 
-### 1. Connexion GitHub-Netlify
+### 1. Connexion GitHub-Vercel
 
-1. Connectez-vous à Netlify
-2. Cliquez sur "Add new site" > "Import an existing project"
-3. Choisissez GitHub comme fournisseur
-4. Sélectionnez votre dépôt
+1. Connectez-vous à [Vercel](https://vercel.com)
+2. Cliquez sur "Add New Project"
+3. Importez votre dépôt GitHub
+4. Sélectionnez le framework "Next.js"
 
-### 2. Configuration du Site
+### 2. Configuration du Projet
 
-1. Dans les paramètres du site Netlify :
-   - Build command : `npm run build`
-   - Publish directory : `.next`
+1. Dans les paramètres du projet :
+   - Build Command : `npm run build` (par défaut)
+   - Output Directory : `.next` (par défaut)
+   - Install Command : `npm install` (par défaut)
 
 2. Configuration des variables d'environnement :
-   - Allez dans "Site settings" > "Environment variables"
+   - Allez dans "Settings" > "Environment Variables"
    - Ajoutez les variables suivantes :
      ```
      NEXT_PUBLIC_SUPABASE_URL=votre_url_supabase
@@ -88,9 +84,9 @@ Dans votre projet Supabase :
 
 ### 3. Déploiement
 
-1. Allez dans l'onglet "Deploys"
-2. Cliquez sur "Clear cache and deploy site"
-3. Attendez que le build se termine
+1. Cliquez sur "Deploy"
+2. Attendez que le build se termine
+3. Votre site sera automatiquement déployé sur un domaine `.vercel.app`
 
 ## Dépannage
 
@@ -101,12 +97,12 @@ Si vous rencontrez des erreurs :
    - Vérifiez la configuration dans `.eslintrc.js`
 
 2. **Erreur de Variables d'Environnement** :
-   - Vérifiez que les variables sont correctement définies dans Netlify
+   - Vérifiez que les variables sont correctement définies dans Vercel
    - Assurez-vous que les valeurs correspondent exactement à celles de Supabase
    - Vérifiez qu'il n'y a pas d'espaces supplémentaires
 
 3. **Erreur de Build** :
-   - Vérifiez les logs de build dans Netlify
+   - Vérifiez les logs de build dans Vercel
    - Assurez-vous que toutes les dépendances sont installées
    - Vérifiez que la version de Node.js est correcte
 
@@ -114,5 +110,5 @@ Si vous rencontrez des erreurs :
 
 Pour mettre à jour le site :
 1. Poussez vos changements sur GitHub
-2. Netlify déploiera automatiquement les modifications
+2. Vercel déploiera automatiquement les modifications
 3. Surveillez les logs de build pour détecter d'éventuelles erreurs 

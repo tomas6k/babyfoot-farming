@@ -1,7 +1,7 @@
 # Fonction delete_game
 
 ## Objectif
-Supprimer un match et annuler ses effets sur les statistiques des joueurs, en restaurant leur état avant le match (expérience, points de vie, mana).
+Supprimer le dernier match enregistré et annuler ses effets sur les statistiques des joueurs, en restaurant leur état avant le match (expérience, points de vie, mana).
 
 ## Paramètres d'entrée
 - `p_match_id` : UUID du match à supprimer
@@ -10,7 +10,7 @@ Supprimer un match et annuler ses effets sur les statistiques des joueurs, en re
 
 ### 1. Vérification du match
 - Vérifie que le match existe
-- Vérifie les permissions de l'utilisateur
+- Vérifie que c'est bien le dernier match enregistré
 - Récupère les données du match avant suppression
 
 ### 2. Restauration des statistiques
@@ -36,25 +36,26 @@ RETURNS TABLE (
 ```
 
 ## Règles métier importantes
-1. Seuls les administrateurs peuvent supprimer des matchs
-2. La suppression doit être complète (match + effets)
-3. Les statistiques des joueurs doivent être cohérentes après suppression
-4. L'historique de suppression est conservé pour audit
+1. Tout utilisateur peut supprimer un match
+2. Seul le dernier match enregistré peut être supprimé
+3. La suppression doit être complète (match + effets)
+4. Les statistiques des joueurs doivent être cohérentes après suppression
+5. L'historique de suppression est conservé pour audit
 
 ## Exemple d'utilisation
 ```sql
--- Supprimer un match et restaurer les statistiques
-SELECT * FROM delete_game('uuid-du-match');
+-- Supprimer le dernier match et restaurer les statistiques
+SELECT * FROM delete_game('uuid-du-dernier-match');
 ```
 
 ## Impact sur le gameplay
-- Permet de corriger des erreurs de saisie
+- Permet de corriger rapidement une erreur de saisie récente
 - Maintient l'intégrité des statistiques
-- Évite les abus potentiels
+- Limite les abus potentiels en ne permettant que la suppression du dernier match
 - Assure la confiance des joueurs dans le système
 
 ## Sécurité
-- Vérification des permissions administrateur
+- Vérification que le match est bien le dernier
 - Journalisation des suppressions
 - Vérification de l'intégrité des données
 - Protection contre les suppressions en cascade non désirées
@@ -67,12 +68,12 @@ SELECT * FROM delete_game('uuid-du-match');
 ```
 
 ## Cas d'utilisation
-1. Correction d'erreurs de saisie
-2. Annulation de matchs invalides
-3. Maintenance administrative
-4. Résolution de litiges
+1. Correction d'une erreur de saisie immédiate
+2. Annulation d'un match invalide récent
+3. Correction rapide d'une erreur de score
 
 ## Limitations
+- Ne peut supprimer que le dernier match
 - Ne peut pas restaurer les matchs supprimés
 - Ne restaure pas les effets indirects (ex: décroissance hebdomadaire)
 - Nécessite que les données d'avant match soient disponibles 

@@ -31,7 +31,7 @@ function TitleCard({
   statTooltip: string 
 }) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-4 border-[#8B7355] dark:border-white">
       <div className="flex flex-col items-center p-4">
         {/* Image/Badge avec tooltip */}
         <TooltipProvider>
@@ -59,7 +59,7 @@ function TitleCard({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <h3 className="text-lg font-bold mb-2">{title}</h3>
+              <h3 className="text-lg font-bold mb-2 text-center w-full">{title}</h3>
             </TooltipTrigger>
             <TooltipContent>
               <p>{description}</p>
@@ -240,7 +240,7 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
 
         {/* Le Classico */}
         <div className="mt-4">
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border-4 border-[#8B7355] dark:border-white">
             <div className="p-4">
               {/* Titre avec badge et description */}
               <div className="flex flex-col items-center mb-4">
@@ -266,7 +266,7 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <h3 className="text-lg font-bold mb-2">Le Classico</h3>
+                      <h3 className="text-lg font-bold mb-2 text-center w-full">Le Classico</h3>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Les plus grandes rivalités</p>

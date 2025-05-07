@@ -6,6 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePlayers } from '@/hooks/usePlayers';
+import { Trash2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -39,6 +50,9 @@ export function MatchHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [matchToDelete, setMatchToDelete] = useState<string | null>(null);
   
   const { players, loading: playersLoading } = usePlayers();
 
@@ -86,6 +100,28 @@ export function MatchHistory() {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(Math.max(1, Math.min(newPage, totalPages)));
+  };
+
+  const handleDeleteMatch = async (matchId: string) => {
+    try {
+      setIsDeleting(true);
+      const { data, error } = await supabase.rpc('delete_game', {
+        p_match_id: matchId
+      });
+
+      if (error) throw error;
+
+      toast.success("Match supprimé avec succès");
+      // Recharger les matchs
+      setCurrentPage(1);
+    } catch (err) {
+      console.error('Erreur lors de la suppression du match:', err);
+      toast.error(err instanceof Error ? err.message : "Une erreur est survenue lors de la suppression du match");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setMatchToDelete(null);
+    }
   };
 
   if (error) {
@@ -144,13 +180,53 @@ export function MatchHistory() {
       ) : (
         <>
           <div className="grid gap-6">
-            {matches.map((match) => (
+            {matches.map((match, index) => (
               <Card key={match.id} className="overflow-hidden">
                 <CardHeader className="bg-muted">
                   <CardTitle className="flex justify-between items-center">
-                    <span>
-                      {format(new Date(match.date), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span>
+                        {format(new Date(match.date), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
+                      </span>
+                      {index === 0 && (
+                        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              onClick={() => setMatchToDelete(match.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Supprimer le match</DialogTitle>
+                              <DialogDescription>
+                                Êtes-vous sûr de vouloir supprimer ce match ? Cette action restaurera les statistiques des joueurs à leur état avant le match.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button
+                                variant="ghost"
+                                onClick={() => setShowDeleteDialog(false)}
+                                disabled={isDeleting}
+                              >
+                                Annuler
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                onClick={() => handleDeleteMatch(match.id)}
+                                disabled={isDeleting}
+                              >
+                                {isDeleting ? "Suppression..." : "Supprimer"}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
                     <span className="text-2xl font-bold">
                       {match.score_white} - {match.score_black}
                     </span>

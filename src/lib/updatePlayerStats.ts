@@ -1,14 +1,23 @@
-import { createClient, PostgrestError } from "@supabase/supabase-js";
+import { Database } from "@/types/supabase";
+import { PostgrestError } from "@supabase/supabase-js";
 import { toast } from "sonner";
-
-const supabase = getSupabaseClient();
+import { supabase } from "@/lib/supabaseClient";
 
 interface Player {
   id: string;
   pseudo: string;
   exp: number;
+  level: number;
+  title: string;
+  description: string;
+  illustration_url: string;
+  required_exp: number;
+  exp_given: number;
+  next_level_exp: number;
+  progress: number;
   mana: number;
   hp: number;
+  disable: boolean;
 }
 
 interface Match {

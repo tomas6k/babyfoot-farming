@@ -18,7 +18,7 @@ export default function DashboardClient({ stats }: DashboardClientProps) {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mt-6 ml-6">
         <div>
           <h2 className="text-2xl font-bold">Tableau de bord</h2>
           <p className="text-muted-foreground">Statistiques pour {currentMonth}</p>

@@ -136,17 +136,8 @@ export function NewMatchForm() {
       <div className="flex items-center justify-between w-full gap-4">
         <div className="flex items-center gap-2">
           <span>{player.pseudo}</span>
-          <div className="flex items-center gap-1 text-sm">
-            <span className="text-blue-400">♦{player.mana}</span>
-            <span className="text-red-400">♥{player.hp}</span>
-          </div>
         </div>
         <div className="flex items-center gap-2">
-          <img 
-            src={player.illustration_url} 
-            alt={player.title}
-            className="w-4 h-4 object-contain"
-          />
           <span className="text-gray-400">Niv. {player.level}</span>
         </div>
       </div>
@@ -169,12 +160,11 @@ export function NewMatchForm() {
         {/* Équipe blanche */}
         <Card className="pixel-card">
           <CardHeader>
-            <CardTitle>Équipe Blanche</CardTitle>
-            <CardDescription>Sélectionnez les joueurs de l'équipe blanche</CardDescription>
+            <CardTitle className="text-2xl mb-4">Équipe Blanche</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm">Attaquant</label>
+              <label className="text-sm">⚔️ Attaquant</label>
               <Select
                 value={selectedPlayers.whiteAttacker}
                 onValueChange={(value) => handlePlayerSelection("whiteAttacker", value)}
@@ -189,7 +179,7 @@ export function NewMatchForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm">Défenseur</label>
+              <label className="text-sm">🛡️ Défenseur</label>
               <Select
                 value={selectedPlayers.whiteDefender}
                 onValueChange={(value) => handlePlayerSelection("whiteDefender", value)}
@@ -223,12 +213,11 @@ export function NewMatchForm() {
         {/* Équipe noire */}
         <Card className="pixel-card">
           <CardHeader>
-            <CardTitle>Équipe Noire</CardTitle>
-            <CardDescription>Sélectionnez les joueurs de l'équipe noire</CardDescription>
+            <CardTitle className="text-2xl mb-4">Équipe Noire</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm">Attaquant</label>
+              <label className="text-sm">⚔️ Attaquant</label>
               <Select
                 value={selectedPlayers.blackAttacker}
                 onValueChange={(value) => handlePlayerSelection("blackAttacker", value)}
@@ -243,7 +232,7 @@ export function NewMatchForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm">Défenseur</label>
+              <label className="text-sm">🛡️ Défenseur</label>
               <Select
                 value={selectedPlayers.blackDefender}
                 onValueChange={(value) => handlePlayerSelection("blackDefender", value)}

@@ -19,7 +19,7 @@ const pressStart2P = {
 };
 
 export const metadata: Metadata = {
-  title: "Babyfoot Farming",
+  title: "Vancelian Babyfoot Kingdom",
   description: "Un jeu de babyfoot avec des mécaniques RPG",
 };
 

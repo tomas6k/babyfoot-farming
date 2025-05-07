@@ -1,6 +1,6 @@
 # Fonctions SQL
 
-Ce document centralise toutes les fonctions SQL utilisées dans l'application Babyfoot Farming.
+Ce document centralise toutes les fonctions SQL utilisées dans l'application Vancelian Babyfoot Kingdom.
 
 ## Vue d'ensemble des fonctions
 

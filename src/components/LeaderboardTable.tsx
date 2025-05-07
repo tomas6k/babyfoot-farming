@@ -16,10 +16,10 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 import { useEffect, useState } from "react";
-import { Shield, Swords } from "lucide-react";
 import { type PlayerStats } from "@/types/supabase";
 import { Progress } from "./ui/progress";
 import { supabase } from "@/lib/supabaseClient";
+import { getGameConfig } from "@/lib/queries/gameConfig";
 
 // Interface pour les données de get_players_level
 interface PlayerLevel {
@@ -54,6 +54,8 @@ interface CombinedPlayerData {
   required_exp: number;
   next_level_exp: number;
   progress: number;
+  hp: number;
+  mana: number;
   
   // Données statistiques (get_player_stats, optionnelles)
   total_matches?: number;
@@ -120,12 +122,17 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
   const [players, setPlayers] = useState<CombinedPlayerData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [gameConfig, setGameConfig] = useState({ max_hp: 10, max_mana: 10 });
 
   // Charger les données
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
+        
+        // Récupérer la configuration du jeu
+        const config = await getGameConfig();
+        setGameConfig(config);
         
         // 1. Récupérer les données de niveau des joueurs
         const { data: levelData, error: levelError } = await supabase
@@ -171,6 +178,8 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
             required_exp: levelPlayer.required_exp,
             next_level_exp: levelPlayer.next_level_exp,
             progress: levelPlayer.progress,
+            hp: levelPlayer.hp,
+            mana: levelPlayer.mana,
             
             // Ajouter les stats si disponibles
             ...(playerStats ? {
@@ -260,8 +269,10 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
       return (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger>
-              <Swords className="h-4 w-4 inline-block mr-2" />
+            <TooltipTrigger asChild>
+              <div className="inline-flex">
+                <span className="text-xl mr-2">⚔️</span>
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-sm">
@@ -276,8 +287,10 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
       return (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger>
-              <Shield className="h-4 w-4 inline-block mr-2" />
+            <TooltipTrigger asChild>
+              <div className="inline-flex">
+                <span className="text-xl mr-2">🛡️</span>
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-sm">
@@ -340,7 +353,7 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
             <TableHead className="px-6 min-w-[200px]">Pseudo</TableHead>
             <TableHead className="text-right px-6">EXP Gagnée</TableHead>
             <TableHead className="px-6">Niveau</TableHead>
-            <TableHead className="px-6">Rang</TableHead>
+            <TableHead className="px-6 min-w-[175px]">Rang</TableHead>
             <TableHead className="px-6">Progression</TableHead>
             <TableHead className="text-right px-6">Parties</TableHead>
             <TableHead className="text-right px-6">Victoires</TableHead>
@@ -366,9 +379,47 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
               <TableRow key={player.id} className="hover:bg-muted/50">
                 <TableCell className="px-6">{index + 1}</TableCell>
                 <TableCell className="px-6">
-                {getRoleIcon(player)}
-                {player.pseudo}
-              </TableCell>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center cursor-pointer">
+                          {getRoleIcon(player)}
+                          <span>{player.pseudo}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-red-500">HP:</span>
+                            <div className="flex gap-1">
+                              {Array.from({ length: gameConfig.max_hp }).map((_, i) => (
+                                <img
+                                  key={`hp-${i}`}
+                                  src={i < player.hp ? "/images/hp.png" : "/images/hp-empty.png"}
+                                  alt={i < player.hp ? "HP" : "Empty HP"}
+                                  className="w-4 h-4"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-blue-500">MANA:</span>
+                            <div className="flex gap-1">
+                              {Array.from({ length: gameConfig.max_mana }).map((_, i) => (
+                                <img
+                                  key={`mana-${i}`}
+                                  src={i < player.mana ? "/images/mana.png" : "/images/mana-empty.png"}
+                                  alt={i < player.mana ? "MANA" : "Empty MANA"}
+                                  className="w-4 h-4"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableCell>
                 <TableCell className="text-right px-6">
                   {player.total_exp_gained !== undefined ? player.total_exp_gained : noStatsMessage}
                 </TableCell>
@@ -378,27 +429,28 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
                     player.level
                   )}
               </TableCell>
-                <TableCell className="px-6">
+                <TableCell className="px-6 py-4">
                 {renderStatTooltip(
-                    `${player.title}\n${player.description}`,
-                  <div className="flex items-center gap-2">
-                    <img 
-                        src={player.illustration_url} 
-                        alt={player.title}
-                      className="w-6 h-6 object-contain"
-                    />
-                      <span>{player.title}</span>
-                  </div>
+                    player.description,
+                    <div className="flex items-center gap-3">
+                      <img 
+                          src={player.illustration_url} 
+                          alt={player.title}
+                          className="w-10 h-10 object-contain"
+                      />
+                      <span className="flex-1">{player.title}</span>
+                    </div>
                 )}
               </TableCell>
                 <TableCell className="px-6">
                 {renderStatTooltip(
-                    `EXP Total: ${player.exp}`,
-                    <div className="space-y-1">
-                      <Progress value={player.progress} className="w-full" />
-                      <div className="text-xs text-gray-500 text-center">
-                        {player.next_level_exp - player.exp} XP restant
-                      </div>
+                    `${player.next_level_exp - player.exp} XP restant`,
+                    <div className="min-w-[150px]">
+                      <Progress 
+                        value={player.progress} 
+                        className="w-full" 
+                        style={{ height: '16px' }}
+                      />
                     </div>
                 )}
               </TableCell>
@@ -414,11 +466,11 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
                 <TableCell className="text-right px-6">
                   {player.victories !== undefined && player.total_matches
                     ? renderStatTooltip(
-                  `Ratio de victoire: ${formatRatio(player.victories, player.total_matches)}\nAttaquant: ${player.victories_attacker}/${player.total_matches_attacker}\nDéfenseur: ${player.victories_defender}/${player.total_matches_defender}`,
-                  <span className={getRatioColorClass(victoryRatio)}>
-                    {player.victories} ({formatRatio(player.victories, player.total_matches)})
-                  </span>
-                      )
+                        `Ratio de victoire: ${formatRatio(player.victories, player.total_matches)}\nAttaquant: ${player.victories_attacker}/${player.total_matches_attacker}\nDéfenseur: ${player.victories_defender}/${player.total_matches_defender}`,
+                        <span className={getRatioColorClass(victoryRatio)}>
+                          {player.victories}
+                        </span>
+                    )
                     : noStatsMessage
                   }
               </TableCell>
@@ -434,55 +486,55 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
                 <TableCell className="text-right px-6">
                   {player.goals_for !== undefined && player.goals_against !== undefined
                     ? renderStatTooltip(
-                  `Ratio buts: ${formatRatio(player.goals_for, player.goals_for + player.goals_against)}\nAttaquant: ${player.goals_for_attacker}/${player.goals_against_attacker}\nDéfenseur: ${player.goals_for_defender}/${player.goals_against_defender}`,
-                  <span className={getRatioColorClass(goalRatio)}>
-                    {player.goals_for}/{player.goals_against} ({formatRatio(player.goals_for, player.goals_for + player.goals_against)})
-                  </span>
-                      )
+                        `Ratio buts: ${formatRatio(player.goals_for, player.goals_for + player.goals_against)}\nAttaquant: ${player.goals_for_attacker}/${player.goals_against_attacker}\nDéfenseur: ${player.goals_for_defender}/${player.goals_against_defender}`,
+                        <span className={getRatioColorClass(goalRatio)}>
+                          {player.goals_for}/{player.goals_against}
+                        </span>
+                    )
                     : noStatsMessage
                   }
               </TableCell>
                 <TableCell className="text-right px-6">
                   {player.best_partner_pseudo && player.best_partner_matches
                     ? renderStatTooltip(
-                  `${player.best_partner_victories} victoires sur ${player.best_partner_matches} matchs\nRatio: ${formatRatio(player.best_partner_victories, player.best_partner_matches)}`,
+                        `${player.best_partner_victories} victoires sur ${player.best_partner_matches} matchs\nRatio: ${formatRatio(player.best_partner_victories, player.best_partner_matches)}`,
                         <span className={getRatioColorClass(player.best_partner_victories && player.best_partner_matches ? player.best_partner_victories / player.best_partner_matches : undefined)}>
-                    {player.best_partner_pseudo} ({formatRatio(player.best_partner_victories, player.best_partner_matches)})
-                  </span>
-                      )
+                          {player.best_partner_pseudo}
+                        </span>
+                    )
                     : noStatsMessage
                   }
               </TableCell>
                 <TableCell className="text-right px-6">
                   {player.worst_partner_pseudo && player.worst_partner_matches
                     ? renderStatTooltip(
-                  `${player.worst_partner_victories} victoires sur ${player.worst_partner_matches} matchs\nRatio: ${formatRatio(player.worst_partner_victories, player.worst_partner_matches)}`,
+                        `${player.worst_partner_victories} victoires sur ${player.worst_partner_matches} matchs\nRatio: ${formatRatio(player.worst_partner_victories, player.worst_partner_matches)}`,
                         <span className={getRatioColorClass(player.worst_partner_victories && player.worst_partner_matches ? player.worst_partner_victories / player.worst_partner_matches : undefined)}>
-                    {player.worst_partner_pseudo} ({formatRatio(player.worst_partner_victories, player.worst_partner_matches)})
-                  </span>
-                      )
+                          {player.worst_partner_pseudo}
+                        </span>
+                    )
                     : noStatsMessage
                   }
               </TableCell>
                 <TableCell className="text-right px-6">
                   {player.best_opponent_pseudo && player.best_opponent_matches
                     ? renderStatTooltip(
-                  `${player.best_opponent_victories} victoires sur ${player.best_opponent_matches} matchs\nRatio: ${formatRatio(player.best_opponent_victories, player.best_opponent_matches)}`,
+                        `${player.best_opponent_victories} victoires sur ${player.best_opponent_matches} matchs\nRatio: ${formatRatio(player.best_opponent_victories, player.best_opponent_matches)}`,
                         <span className={getRatioColorClass(player.best_opponent_victories && player.best_opponent_matches ? player.best_opponent_victories / player.best_opponent_matches : undefined)}>
-                    {player.best_opponent_pseudo} ({formatRatio(player.best_opponent_victories, player.best_opponent_matches)})
-                  </span>
-                      )
+                          {player.best_opponent_pseudo}
+                        </span>
+                    )
                     : noStatsMessage
                   }
               </TableCell>
                 <TableCell className="text-right px-6">
                   {player.worst_opponent_pseudo && player.worst_opponent_matches
                     ? renderStatTooltip(
-                  `${player.worst_opponent_victories} victoires sur ${player.worst_opponent_matches} matchs\nRatio: ${formatRatio(player.worst_opponent_victories, player.worst_opponent_matches)}`,
+                        `${player.worst_opponent_victories} victoires sur ${player.worst_opponent_matches} matchs\nRatio: ${formatRatio(player.worst_opponent_victories, player.worst_opponent_matches)}`,
                         <span className={getRatioColorClass(player.worst_opponent_victories && player.worst_opponent_matches ? player.worst_opponent_victories / player.worst_opponent_matches : undefined)}>
-                    {player.worst_opponent_pseudo} ({formatRatio(player.worst_opponent_victories, player.worst_opponent_matches)})
-                  </span>
-                      )
+                          {player.worst_opponent_pseudo}
+                        </span>
+                    )
                     : noStatsMessage
                   }
               </TableCell>

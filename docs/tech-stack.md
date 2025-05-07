@@ -1,4 +1,4 @@
-# Stack Technique Babyfoot Farming
+# Stack Technique Vancelian Babyfoot Kingdom
 
 ## Technologies Principales
 

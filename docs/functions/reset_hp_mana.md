@@ -1,68 +1,91 @@
 # Fonction reset_hp_mana
 
 ## Objectif
-Réinitialiser les points de vie (HP) et de mana d'un joueur à leurs valeurs maximales, généralement utilisé pour des événements spéciaux ou des actions administratives.
+Restaurer automatiquement les points de vie (HP) et les points de mana de tous les joueurs à leurs valeurs maximales définies dans la table `game_config`. Cette fonction est exécutée automatiquement chaque dimanche à 23h59.
 
 ## Paramètres d'entrée
-- `p_player_id` : UUID du joueur dont on veut réinitialiser les ressources
+Aucun paramètre n'est requis car la fonction s'exécute automatiquement et affecte tous les joueurs.
+
+## Configuration requise
+La table `game_config` doit contenir les valeurs suivantes :
+```sql
+- max_hp : Nombre maximum de points de vie (valeur par défaut)
+- max_mana : Nombre maximum de points de mana (valeur par défaut)
+```
 
 ## Étapes de traitement
 
-### 1. Vérification du joueur
-- Vérifie que le joueur existe dans la base de données
-- Vérifie les permissions de l'utilisateur qui fait l'appel
+### 1. Récupération des valeurs maximales
+- Lecture des valeurs max_hp et max_mana dans la table `game_config`
+- Vérification de l'existence des configurations
 
-### 2. Réinitialisation des ressources
-- Met les points de vie (HP) à leur maximum (5)
-- Met les points de mana à leur maximum (5)
-- Met à jour la date de dernière régénération à maintenant
+### 2. Mise à jour des joueurs
+- Mise à jour de tous les joueurs non désactivés
+- Restauration du HP à la valeur maximale
+- Restauration du mana à la valeur maximale
 
-### 3. Enregistrement
-- Enregistre la réinitialisation dans l'historique
-- Met à jour les statistiques du joueur
+### 3. Journalisation
+- Enregistrement de l'opération dans les logs
+- Stockage du nombre de joueurs affectés
 
 ## Valeur de retour
 ```sql
 RETURNS TABLE (
-    player_id UUID,        -- ID du joueur
-    pseudo TEXT,           -- Nom du joueur
-    new_hp INTEGER,        -- Nouveaux points de vie (5)
-    new_mana INTEGER,      -- Nouveaux points de mana (5)
-    reset_time TIMESTAMP   -- Moment de la réinitialisation
+    reset_time TIMESTAMP,        -- Moment de l'exécution
+    players_updated INTEGER,     -- Nombre de joueurs mis à jour
+    max_hp_value INTEGER,        -- Valeur maximale de HP utilisée
+    max_mana_value INTEGER      -- Valeur maximale de mana utilisée
 )
 ```
 
 ## Règles métier importantes
-1. Seuls les administrateurs peuvent utiliser cette fonction
-2. Les ressources sont toujours réinitialisées à leur maximum (5)
-3. La réinitialisation est immédiate et ne dépend pas du temps écoulé
-4. L'historique de régénération est mis à jour pour éviter des régénérations immédiates
+1. Seuls les joueurs actifs (non désactivés) sont affectés
+2. Les valeurs maximales sont définies globalement dans `game_config`
+3. L'exécution est automatique et hebdomadaire
+4. L'opération est atomique (tout ou rien)
 
-## Exemple d'utilisation
+## Planification
 ```sql
--- Réinitialiser les ressources d'un joueur
-SELECT * FROM reset_hp_mana('uuid-du-joueur');
+-- Exécution automatique chaque dimanche à 23h59
+SELECT cron.schedule(
+  'reset-hp-mana',              -- Nom unique du job
+  '59 23 * * 0',               -- Expression cron (dimanche 23:59)
+  'SELECT reset_hp_mana()'      -- Appel de la fonction
+);
 ```
 
 ## Impact sur le gameplay
-- Permet de "sauver" un joueur bloqué avec peu de ressources
-- Utilisé pour des événements spéciaux (tournois, événements saisonniers)
-- Peut servir de récompense ou de bonus
-- Aide à maintenir l'engagement des joueurs
+- Permet aux joueurs de recommencer la semaine avec des ressources complètes
+- Encourage la participation active au jeu
+- Crée un cycle hebdomadaire de gameplay
+- Équilibre le jeu en donnant une chance égale à tous les joueurs
 
 ## Sécurité
-- Nécessite des droits d'administration
-- Les appels sont journalisés
-- Vérifie les permissions RLS
+- Fonction exécutée automatiquement sans intervention utilisateur
+- Journalisation des opérations pour audit
+- Vérification des contraintes d'intégrité
 
-## Tables associées
+## Tables impactées
 ```sql
-- players : Pour mettre à jour les ressources
-- audit_log : Pour enregistrer l'action (si implémenté)
+- players : Mise à jour des valeurs HP et mana
+- game_config : Lecture des valeurs maximales
+- audit_log : Enregistrement de l'opération
 ```
 
 ## Cas d'utilisation
-1. Récompense pour participation à un événement
-2. Correction d'un problème technique
-3. Début de tournoi
-4. Action administrative 
+1. Réinitialisation hebdomadaire automatique
+2. Maintenance du système
+3. Correction d'anomalies
+4. Équilibrage du jeu
+
+## Limitations
+- Ne peut pas être déclenchée manuellement par les utilisateurs
+- Affecte tous les joueurs en même temps
+- Ne conserve pas l'historique des valeurs précédentes
+- Ne permet pas de personnalisation par joueur
+
+## Dépendances
+- Extension pg_cron pour la planification
+- Table game_config pour les valeurs maximales
+- Table players pour les mises à jour
+- Table audit_log pour la journalisation 
