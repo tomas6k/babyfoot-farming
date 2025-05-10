@@ -20,12 +20,15 @@ export async function getPlayerStats(month?: string, playerId?: string): Promise
     // Formater la date si elle est fournie
     let formattedMonth: string | null = null;
     if (month) {
-      const date = new Date(month + "-01");
-      if (isNaN(date.getTime())) {
-        console.warn("Format de date invalide:", month);
+      // Format attendu: YYYY-MM
+      const regex = /^\d{4}-\d{2}$/;
+      if (!regex.test(month)) {
+        console.warn("Format de date invalide, format attendu YYYY-MM:", month);
         return [];
       }
-      formattedMonth = date.toISOString().split('T')[0];
+      
+      // Ajouter le jour 01 pour créer une date valide (YYYY-MM-01)
+      formattedMonth = `${month}-01`;
       console.log("Date formatée:", formattedMonth);
     }
 
@@ -36,10 +39,26 @@ export async function getPlayerStats(month?: string, playerId?: string): Promise
     };
     console.log("Appel RPC avec params:", params);
 
-    // Désactiver le cache pour l'appel
+    // Essayer d'abord avec le client Supabase (méthode recommandée)
+    try {
+      const { data, error } = await supabase.rpc('get_player_stats', params);
+      
+      if (error) {
+        console.error("Erreur avec client Supabase:", error);
+        // On continuera avec la méthode fetch en cas d'échec
+      } else if (data) {
+        console.log("Données reçues via client Supabase:", data.length, "joueurs");
+        return data;
+      }
+    } catch (supabaseError) {
+      console.error("Exception avec client Supabase:", supabaseError);
+      // On continuera avec la méthode fetch en cas d'échec
+    }
+
+    // Méthode alternative avec fetch direct (si la méthode précédente a échoué)
+    console.log("Tentative avec fetch direct...");
     const timestamp = new Date().getTime();
     
-    // Utiliser l'API fetch pour appeler la fonction RPC sans cache
     const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_player_stats?cacheBuster=${timestamp}`, {
       method: 'POST',
       headers: {
@@ -54,8 +73,23 @@ export async function getPlayerStats(month?: string, playerId?: string): Promise
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Erreur RPC get_player_stats:", errorData);
+      let errorText = "Erreur inconnue";
+      try {
+        const errorData = await response.json();
+        console.error("Erreur RPC get_player_stats:", errorData);
+        errorText = JSON.stringify(errorData);
+      } catch (parseError) {
+        errorText = await response.text();
+        console.error("Erreur RPC get_player_stats (texte brut):", errorText);
+      }
+      
+      console.error("Détails de la réponse d'erreur:", {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        error: errorText
+      });
+      
       return [];
     }
 
@@ -72,7 +106,7 @@ export async function getPlayerStats(month?: string, playerId?: string): Promise
       return [];
     }
 
-    console.log("Données reçues:", data.length, "joueurs");
+    console.log("Données reçues via fetch:", data.length, "joueurs");
     return data;
   } catch (error: unknown) {
     // Log détaillé de l'erreur
