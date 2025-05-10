@@ -36,26 +36,30 @@ export async function getPlayerStats(month?: string, playerId?: string): Promise
     };
     console.log("Appel RPC avec params:", params);
 
-    // Appeler la fonction get_player_stats
-    const { data, error } = await supabase.rpc('get_player_stats', params);
+    // Désactiver le cache pour l'appel
+    const timestamp = new Date().getTime();
+    
+    // Utiliser l'API fetch pour appeler la fonction RPC sans cache
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_player_stats?cacheBuster=${timestamp}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
+      body: JSON.stringify(params),
+      cache: 'no-store'
+    });
 
-    // Gestion détaillée des erreurs
-    if (error) {
-      console.error("Erreur RPC get_player_stats:", {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        params
-      });
-
-      // Si c'est une erreur de fonction non trouvée, on le log spécifiquement
-      if (error.message?.includes("function") && error.message?.includes("does not exist")) {
-        console.error("La fonction get_player_stats n'existe pas dans la base de données");
-      }
-
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Erreur RPC get_player_stats:", errorData);
       return [];
     }
+
+    const data = await response.json();
     
     // Vérification des données
     if (!data) {

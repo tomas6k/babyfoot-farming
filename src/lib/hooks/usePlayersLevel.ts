@@ -28,10 +28,30 @@ export function usePlayersLevel() {
   useEffect(() => {
     async function fetchPlayers() {
       try {
-        const { data, error } = await supabase.rpc('get_players_level');
+        // Utiliser fetch avec des en-têtes anti-cache pour éviter la mise en cache
+        const timestamp = new Date().getTime();
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_players_level?cacheBuster=${timestamp}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+          },
+          body: JSON.stringify({}),
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to fetch players: ${JSON.stringify(errorData)}`);
+        }
+
+        const data = await response.json();
         
-        if (error) {
-          throw error;
+        if (!data) {
+          throw new Error('No data returned from get_players_level');
         }
 
         // Trier les joueurs par niveau puis par expérience
@@ -45,6 +65,7 @@ export function usePlayersLevel() {
         setPlayers(sortedPlayers);
         setIsLoading(false);
       } catch (err) {
+        console.error('Error fetching player levels:', err);
         setError(err instanceof Error ? err : new Error('Failed to fetch players'));
         setIsLoading(false);
       }
