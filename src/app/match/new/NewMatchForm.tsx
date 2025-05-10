@@ -40,7 +40,6 @@ export function NewMatchForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { players, isLoading: playersLoading, error: playersError } = usePlayersLevel();
-  const [user, setUser] = useState<any>(null);
   const [selectedPlayers, setSelectedPlayers] = useState({
     whiteAttacker: "",
     whiteDefender: "",
@@ -51,15 +50,6 @@ export function NewMatchForm() {
     white: 0,
     black: 0,
   });
-
-  useEffect(() => {
-    // Récupérer l'utilisateur connecté
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-  }, []);
 
   const getPlayerWarnings = () => {
     const warnings: { playerId: string; pseudo: string; warnings: string[] }[] = [];
@@ -105,10 +95,6 @@ export function NewMatchForm() {
     setIsLoading(true);
 
     try {
-      if (!user) {
-        throw new Error("Vous devez être connecté pour soumettre un match");
-      }
-
       await processMatch({
         white_attacker: selectedPlayers.whiteAttacker,
         white_defender: selectedPlayers.whiteDefender,
@@ -116,7 +102,6 @@ export function NewMatchForm() {
         black_defender: selectedPlayers.blackDefender,
         score_white: scores.white,
         score_black: scores.black,
-        added_by: user.id
       });
 
       router.push("/dashboard");
