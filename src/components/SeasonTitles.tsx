@@ -4,6 +4,8 @@ import Image from "next/image";
 import { BaseMatchStats, ComplexStats, HistoricalStats } from "@/types/stats";
 import { useEffect, useState } from "react";
 import { getBaseMatchStats, getComplexStats, getHistoricalStats } from "@/lib/queries/stats";
+import { Button } from "./ui/button";
+import { RefreshCcw } from "lucide-react";
 
 interface SeasonTitlesProps {
   month?: string;
@@ -105,6 +107,7 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
   const [historicalStats, setHistoricalStats] = useState<HistoricalStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -112,7 +115,7 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
         setLoading(true);
         setError(null);
 
-        console.log('Fetching stats for month:', month);
+        console.log('Fetching stats for month:', month, 'refreshCounter:', refreshCounter);
         const [base, complex, historical] = await Promise.all([
           getBaseMatchStats(month),
           getComplexStats(month),
@@ -141,7 +144,11 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
     };
 
     fetchStats();
-  }, [month]);
+  }, [month, refreshCounter]);
+
+  const handleRefresh = () => {
+    setRefreshCounter(prev => prev + 1);
+  };
 
   if (loading) {
     return <div className="text-center">Chargement des statistiques en cours...</div>;
@@ -154,12 +161,22 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
         <div className="text-sm text-gray-500">
           Veuillez réessayer plus tard ou contacter l'administrateur si le problème persiste.
         </div>
+        <Button variant="outline" onClick={handleRefresh} className="mt-4">
+          <RefreshCcw className="mr-2 h-4 w-4" /> Réessayer
+        </Button>
       </div>
     );
   }
 
   if (!baseStats || !complexStats || !historicalStats) {
-    return <div className="text-center">Aucune statistique n'est disponible pour le moment</div>;
+    return (
+      <div className="text-center">
+        Aucune statistique n'est disponible pour le moment
+        <Button variant="outline" onClick={handleRefresh} className="mt-4 ml-4">
+          <RefreshCcw className="mr-2 h-4 w-4" /> Réessayer
+        </Button>
+      </div>
+    );
   }
 
   // Logs de débogage
@@ -187,7 +204,12 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
 
   return (
     <div className="retro-container retro-section">
-      <h2 className="retro-section-title text-left">Titres de la saison</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="retro-section-title text-left">Titres de la saison</h2>
+        <Button variant="outline" onClick={handleRefresh} size="sm">
+          <RefreshCcw className="mr-2 h-4 w-4" /> Rafraîchir
+        </Button>
+      </div>
       
       {/* Titres d'équipe */}
       <div className="space-y-6">

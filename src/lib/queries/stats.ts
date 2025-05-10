@@ -106,13 +106,18 @@ export async function getBaseMatchStats(month?: string) {
       p_date = new Date(month);
     }
 
-    console.log('Calling get_base_match_stats with params:', { p_date, p_date_start, p_date_end });
+    // Ajout d'un paramètre timestamp pour contourner le cache
+    const cacheBuster = new Date().getTime().toString();
+    
+    console.log('Calling get_base_match_stats with params:', { p_date, p_date_start, p_date_end, cacheBuster });
 
     const { data, error } = await supabase
       .rpc('get_base_match_stats', {
         p_date,
         p_date_start,
-        p_date_end
+        p_date_end,
+        // Le paramètre cacheBuster sera ignoré par la fonction mais aidera à contourner le cache
+        cache_buster: cacheBuster
       });
 
     if (error) {
@@ -151,13 +156,18 @@ export async function getComplexStats(month?: string) {
       target_start_date = new Date(month);
     }
 
-    console.log('Calling get_complex_stats with params:', { target_start_date, target_end_date, target_player_id });
+    // Ajout d'un paramètre timestamp pour contourner le cache
+    const cacheBuster = new Date().getTime().toString();
+    
+    console.log('Calling get_complex_stats with params:', { target_start_date, target_end_date, target_player_id, cacheBuster });
 
     const { data, error } = await supabase
       .rpc('get_complex_stats', {
         target_start_date,
         target_end_date,
-        target_player_id
+        target_player_id,
+        // Le paramètre cacheBuster sera ignoré par la fonction mais aidera à contourner le cache
+        cache_buster: cacheBuster
       });
 
     if (error) {
@@ -200,13 +210,18 @@ export async function getHistoricalStats(month?: string) {
       target_start_date = new Date(month);
     }
 
-    console.log('Calling get_historical_stats with params:', { target_start_date, target_end_date, target_player_id });
+    // Ajout d'un paramètre timestamp pour contourner le cache
+    const cacheBuster = new Date().getTime().toString();
+    
+    console.log('Calling get_historical_stats with params:', { target_start_date, target_end_date, target_player_id, cacheBuster });
 
     const { data, error } = await supabase
       .rpc('get_historical_stats', {
         target_start_date,
         target_end_date,
-        target_player_id
+        target_player_id,
+        // Le paramètre cacheBuster sera ignoré par la fonction mais aidera à contourner le cache
+        cache_buster: cacheBuster
       });
 
     if (error) {
