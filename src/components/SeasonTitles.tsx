@@ -105,43 +105,46 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
   const [baseStats, setBaseStats] = useState<BaseMatchStats | null>(null);
   const [complexStats, setComplexStats] = useState<ComplexStats | null>(null);
   const [historicalStats, setHistoricalStats] = useState<HistoricalStats | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    async function fetchStats() {
       try {
         setLoading(true);
         setError(null);
 
-        console.log('Fetching stats for month:', month, 'refreshCounter:', refreshCounter);
-        const [base, complex, historical] = await Promise.all([
-          getBaseMatchStats(month),
-          getComplexStats(month),
-          getHistoricalStats(month)
-        ]);
+        // Convertir le mois au format Date
+        const monthDate = month ? new Date(month + '-01') : undefined;
         
-        if (!base || !complex || !historical) {
-          setError('Aucune statistique disponible pour le moment');
-          return;
+        // Obtenir le premier jour du mois suivant pour l'utiliser comme date de fin
+        let nextMonthDate;
+        if (monthDate) {
+          nextMonthDate = new Date(monthDate);
+          nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
         }
 
-        console.log('Stats received:', { base, complex, historical });
-        setBaseStats(base);
-        setComplexStats(complex);
-        setHistoricalStats(historical);
-      } catch (err) {
-        console.error('Error fetching stats:', err);
-        setError(
-          err instanceof Error 
-            ? `Erreur lors du chargement des statistiques : ${err.message}`
-            : 'Une erreur inattendue est survenue lors du chargement des statistiques'
+        // Récupérer les statistiques avec les nouvelles dates
+        const historicalData = await getHistoricalStats(
+          undefined, // Pas de joueur spécifique
+          monthDate,  // Premier jour du mois comme date de début
+          nextMonthDate // Premier jour du mois suivant comme date de fin
         );
+        setHistoricalStats(historicalData);
+
+        const baseData = await getBaseMatchStats(month);
+        setBaseStats(baseData);
+
+        const complexData = await getComplexStats(month);
+        setComplexStats(complexData);
+      } catch (err) {
+        console.error("Erreur lors du chargement des statistiques:", err);
+        setError(err instanceof Error ? err : new Error("Une erreur est survenue"));
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     fetchStats();
   }, [month, refreshCounter]);
@@ -157,13 +160,10 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
   if (error) {
     return (
       <div className="text-center">
-        <div className="text-red-500 mb-2">{error}</div>
+        <div className="text-red-500 mb-2">{error.message}</div>
         <div className="text-sm text-gray-500">
           Veuillez réessayer plus tard ou contacter l'administrateur si le problème persiste.
         </div>
-        <Button variant="outline" onClick={handleRefresh} className="mt-4">
-          <RefreshCcw className="mr-2 h-4 w-4" /> Réessayer
-        </Button>
       </div>
     );
   }

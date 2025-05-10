@@ -224,17 +224,17 @@ export async function getComplexStats(month?: string) {
   }
 }
 
-export async function getHistoricalStats(month?: string) {
+export async function getHistoricalStats(
+  targetPlayerId?: string,
+  targetStartDate?: Date,
+  targetEndDate?: Date
+) {
   try {
-    let target_start_date = null;
-    let target_end_date = null;
-    let target_player_id = null;
-
-    if (month) {
-      target_start_date = new Date(month);
-    }
-    
-    console.log('Calling get_historical_stats with params:', { target_start_date, target_end_date, target_player_id });
+    console.log('Calling get_historical_stats with params:', {
+      p_target_player_id: targetPlayerId || null,
+      p_target_start_date: targetStartDate || null,
+      p_target_end_date: targetEndDate || null
+    });
 
     // Utilisation d'une requête fetch avec en-têtes anti-cache
     const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_historical_stats`;
@@ -250,9 +250,9 @@ export async function getHistoricalStats(month?: string) {
         'Expires': '0'
       },
       body: JSON.stringify({
-        target_start_date,
-        target_end_date,
-        target_player_id
+        p_target_player_id: targetPlayerId || null,
+        p_target_start_date: targetStartDate?.toISOString() || null,
+        p_target_end_date: targetEndDate?.toISOString() || null
       }),
       cache: 'no-store'
     });
@@ -264,32 +264,9 @@ export async function getHistoricalStats(month?: string) {
     }
 
     const data = await response.json();
-
-    if (!data) {
-      console.warn('No data returned from get_historical_stats');
-      return {
-        dessert: [],
-        first_blood: [],
-        monte_cristo: [],
-        fidele: [],
-        casanova: [],
-        classicos: []
-      };
-    }
-
-    // Log détaillé des données historiques
-    console.log('Historical stats received:', {
-      casanova: data.casanova || [],
-      dessert: data.dessert || [],
-      first_blood: data.first_blood || [],
-      monte_cristo: data.monte_cristo || [],
-      fidele: data.fidele || [],
-      classicos: data.classicos || []
-    });
-
     return data;
   } catch (error) {
-    console.error('Error in getHistoricalStats:', error);
+    console.error("Error in getHistoricalStats:", error);
     throw error;
   }
 } 
