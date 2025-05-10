@@ -105,25 +105,37 @@ export async function getBaseMatchStats(month?: string) {
     if (month) {
       p_date = new Date(month);
     }
-
-    // Ajout d'un paramètre timestamp pour contourner le cache
-    const cacheBuster = new Date().getTime().toString();
     
-    console.log('Calling get_base_match_stats with params:', { p_date, p_date_start, p_date_end, cacheBuster });
+    console.log('Calling get_base_match_stats with params:', { p_date, p_date_start, p_date_end });
 
-    const { data, error } = await supabase
-      .rpc('get_base_match_stats', {
+    // Utilisation d'une requête fetch avec en-têtes anti-cache
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_base_match_stats`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Expires': '0'
+      },
+      body: JSON.stringify({
         p_date,
         p_date_start,
-        p_date_end,
-        // Le paramètre cacheBuster sera ignoré par la fonction mais aidera à contourner le cache
-        cache_buster: cacheBuster
-      });
+        p_date_end
+      }),
+      cache: 'no-store'
+    });
 
-    if (error) {
-      console.error('Supabase RPC error in getBaseMatchStats:', error.message, error.details, error.hint);
-      throw new Error(`Failed to fetch base match stats: ${error.message}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Fetch error in getBaseMatchStats:', errorText);
+      throw new Error(`Failed to fetch base match stats: ${response.statusText}`);
     }
+
+    const data = await response.json();
 
     if (!data) {
       console.warn('No data returned from get_base_match_stats');
@@ -155,25 +167,37 @@ export async function getComplexStats(month?: string) {
     if (month) {
       target_start_date = new Date(month);
     }
-
-    // Ajout d'un paramètre timestamp pour contourner le cache
-    const cacheBuster = new Date().getTime().toString();
     
-    console.log('Calling get_complex_stats with params:', { target_start_date, target_end_date, target_player_id, cacheBuster });
+    console.log('Calling get_complex_stats with params:', { target_start_date, target_end_date, target_player_id });
 
-    const { data, error } = await supabase
-      .rpc('get_complex_stats', {
+    // Utilisation d'une requête fetch avec en-têtes anti-cache
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_complex_stats`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Expires': '0'
+      },
+      body: JSON.stringify({
         target_start_date,
         target_end_date,
-        target_player_id,
-        // Le paramètre cacheBuster sera ignoré par la fonction mais aidera à contourner le cache
-        cache_buster: cacheBuster
-      });
+        target_player_id
+      }),
+      cache: 'no-store'
+    });
 
-    if (error) {
-      console.error('Supabase RPC error in getComplexStats:', error.message, error.details, error.hint);
-      throw new Error(`Failed to fetch complex stats: ${error.message}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Fetch error in getComplexStats:', errorText);
+      throw new Error(`Failed to fetch complex stats: ${response.statusText}`);
     }
+
+    const data = await response.json();
 
     if (!data) {
       console.warn('No data returned from get_complex_stats');
@@ -209,25 +233,37 @@ export async function getHistoricalStats(month?: string) {
     if (month) {
       target_start_date = new Date(month);
     }
-
-    // Ajout d'un paramètre timestamp pour contourner le cache
-    const cacheBuster = new Date().getTime().toString();
     
-    console.log('Calling get_historical_stats with params:', { target_start_date, target_end_date, target_player_id, cacheBuster });
+    console.log('Calling get_historical_stats with params:', { target_start_date, target_end_date, target_player_id });
 
-    const { data, error } = await supabase
-      .rpc('get_historical_stats', {
+    // Utilisation d'une requête fetch avec en-têtes anti-cache
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_historical_stats`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Expires': '0'
+      },
+      body: JSON.stringify({
         target_start_date,
         target_end_date,
-        target_player_id,
-        // Le paramètre cacheBuster sera ignoré par la fonction mais aidera à contourner le cache
-        cache_buster: cacheBuster
-      });
+        target_player_id
+      }),
+      cache: 'no-store'
+    });
 
-    if (error) {
-      console.error('Supabase RPC error in getHistoricalStats:', error.message, error.details, error.hint);
-      throw new Error(`Failed to fetch historical stats: ${error.message}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Fetch error in getHistoricalStats:', errorText);
+      throw new Error(`Failed to fetch historical stats: ${response.statusText}`);
     }
+
+    const data = await response.json();
 
     if (!data) {
       console.warn('No data returned from get_historical_stats');
