@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePlayers } from '@/hooks/usePlayers';
 import { Trash2 } from 'lucide-react';
+import { useSWRConfig } from 'swr';
 import {
   Dialog,
   DialogContent,
@@ -53,6 +54,7 @@ export function MatchHistory() {
   const [matchToDelete, setMatchToDelete] = useState<string | null>(null);
   
   const { players, loading: playersLoading } = usePlayers();
+  const { mutate } = useSWRConfig();
 
   useEffect(() => {
     async function fetchMatches() {
@@ -109,6 +111,14 @@ export function MatchHistory() {
 
       if (error) throw error;
 
+      // Invalidate all stats-related caches
+      const currentDate = new Date();
+      const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      
+      // Revalidate stats cache
+      mutate(['playerStats', currentMonth]);
+      mutate('levels');
+      
       toast.success("Match supprimé avec succès");
       // Recharger les matchs
       setCurrentPage(1);
