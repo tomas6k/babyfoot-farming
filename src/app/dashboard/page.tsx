@@ -3,6 +3,10 @@ import DashboardClient from "./DashboardClient";
 import { getPlayerStats } from "@/lib/getPlayerStats";
 import { type PlayerStats } from "@/types/supabase";
 
+// Désactiver le cache statique pour cette page
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
   throw new Error("NEXT_PUBLIC_SUPABASE_URL is required");
 }

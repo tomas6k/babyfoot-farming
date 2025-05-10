@@ -107,15 +107,40 @@ function getCurrentMonth() {
 }
 
 async function fetchStats(period: string) {
-  const date = new Date(`${period}-01`);
-  const { data, error } = await supabase
-    .rpc("get_player_stats", {
-      p_player_id: null,
-      p_month: date.toISOString(),
-    });
+  try {
+    const date = new Date(`${period}-01`);
     
-  if (error) throw error;
-  return data;
+    // Utilisation d'une requête fetch avec en-têtes anti-cache
+    const timestamp = new Date().getTime().toString();
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_player_stats`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Expires': '0'
+      },
+      body: JSON.stringify({
+        p_player_id: null,
+        p_month: date.toISOString()
+      }),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch player stats: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error in fetchStats:", error);
+    throw error;
+  }
 }
 
 export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: LeaderboardTableProps) {
