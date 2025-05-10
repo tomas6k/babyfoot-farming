@@ -21,7 +21,6 @@ import { useEffect, useState } from "react";
 import type { LevelWithInfo } from "@/lib/queries/levels";
 import Image from "next/image";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import useSWR from 'swr';
 import { ArrowUpDown } from "lucide-react";
 
 type PlayerStats = Database['public']['Functions']['get_player_stats']['Returns'][0];
@@ -33,17 +32,41 @@ interface SortConfig {
 
 export function PlayerStatsTable() {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', direction: 'desc' });
+  const [levels, setLevels] = useState<LevelWithInfo[] | null>(null);
+  const [stats, setStats] = useState<PlayerStats[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
   const currentDate = new Date();
   const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
-  const { data: levels, error: levelsError } = useSWR('levels', getLevels);
-  const { data: stats, error: statsError, isLoading } = useSWR(
-    ['playerStats', currentMonth],
-    () => getPlayerStats(currentMonth),
-    { refreshInterval: 30000 }
-  );
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [levelsData, statsData] = await Promise.all([
+          getLevels(),
+          getPlayerStats(currentMonth)
+        ]);
+        setLevels(levelsData);
+        setStats(statsData);
+      } catch (err) {
+        console.error("Erreur lors du chargement des données:", err);
+        setError(err instanceof Error ? err : new Error("Une erreur est survenue lors du chargement des données"));
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  if (levelsError || statsError) {
+    fetchData();
+
+    // Rafraîchissement des données toutes les 30 secondes
+    const intervalId = setInterval(fetchData, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [currentMonth]);
+
+  if (error) {
     return (
       <div className="text-red-500 p-4 rounded-lg bg-red-100">
         Une erreur est survenue lors du chargement des données.
@@ -51,7 +74,7 @@ export function PlayerStatsTable() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || !stats) {
     return (
       <div className="space-y-4 animate-pulse">
         <div className="h-8 bg-gray-200 rounded w-1/4"></div>
@@ -64,7 +87,7 @@ export function PlayerStatsTable() {
     );
   }
 
-  const sortedStats = [...(stats || [])].sort((a, b) => {
+  const sortedStats = [...stats].sort((a, b) => {
     if (!sortConfig.column) return 0;
     
     const aValue = a[sortConfig.column];

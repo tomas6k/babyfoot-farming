@@ -24,7 +24,6 @@ import { processMatch } from "@/lib/updatePlayerStats";
 import { usePlayersLevel } from "@/lib/hooks/usePlayersLevel";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
-import { useSWRConfig } from "swr";
 
 const supabase = getSupabaseClient();
 
@@ -39,7 +38,6 @@ interface PlayerStats {
 
 export function NewMatchForm() {
   const router = useRouter();
-  const { mutate } = useSWRConfig();
   const { players, isLoading: playersLoading, error: playersError } = usePlayersLevel();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState({
@@ -105,14 +103,6 @@ export function NewMatchForm() {
         score_white: scores.white,
         score_black: scores.black,
       });
-
-      // Invalidate all stats-related caches
-      const currentDate = new Date();
-      const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-      
-      // Revalidate stats cache
-      mutate(['playerStats', currentMonth]);
-      mutate('levels');
 
       router.push("/dashboard");
     } catch (error) {
