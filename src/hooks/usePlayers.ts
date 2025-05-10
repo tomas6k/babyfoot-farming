@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/lib/supabaseClient';
 
 export interface Player {
   id: string;
@@ -15,7 +15,6 @@ export function usePlayers() {
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const supabase = createClient();
         const { data, error } = await supabase
           .from('players')
           .select('*')

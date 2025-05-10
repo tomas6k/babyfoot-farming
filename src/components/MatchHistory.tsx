@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,8 +40,6 @@ interface MatchHistoryItem {
   black_defender_level: number;
   black_defender_exp_gained: number;
 }
-
-const supabase = createClient();
 
 export function MatchHistory() {
   const [matches, setMatches] = useState<MatchHistoryItem[]>([]);
