@@ -127,7 +127,7 @@ interface HistoricalStats {
   first_blood: Array<{
     player_id: string;
     pseudo: string;
-    match_count: number;
+    total_first_matches: number;
     victories: number;
     win_rate: number;
   }>;

@@ -617,7 +617,7 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             }
             statTooltip={
               historicalStats?.first_blood?.length > 0
-                ? `${historicalStats.first_blood[0].victories} victoires sur ${historicalStats.first_blood[0].match_count} matchs`
+                ? `${historicalStats.first_blood[0].victories} victoires sur ${historicalStats.first_blood[0].total_first_matches} matchs`
                 : "Pas encore de premier match du lundi"
             }
           />
