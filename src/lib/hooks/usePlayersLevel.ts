@@ -28,30 +28,16 @@ export function usePlayersLevel() {
   useEffect(() => {
     async function fetchPlayers() {
       try {
-        // Utiliser fetch avec des en-têtes anti-cache pour éviter la mise en cache
-        const timestamp = new Date().getTime();
-        const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_players_level?cacheBuster=${timestamp}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-          },
-          body: JSON.stringify({}),
-          cache: 'no-store'
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Failed to fetch players: ${JSON.stringify(errorData)}`);
+        // Utiliser le client Supabase directement pour éviter les problèmes de filtrage
+        const { data, error } = await supabase.rpc('get_players_level');
+        
+        if (error) {
+          console.error('Erreur Supabase dans get_players_level:', error);
+          throw new Error(`Erreur lors de la récupération des joueurs: ${error.message}`);
         }
-
-        const data = await response.json();
         
         if (!data) {
-          throw new Error('No data returned from get_players_level');
+          throw new Error('Aucune donnée retournée par get_players_level');
         }
 
         // Trier les joueurs par niveau puis par expérience
