@@ -196,35 +196,40 @@ interface ComplexStats {
 ## Code Source
 
 ```sql
-CREATE OR REPLACE FUNCTION get_complex_stats(
-    target_start_date timestamptz DEFAULT NULL,
-    target_end_date timestamptz DEFAULT NULL,
-    target_player_id uuid DEFAULT NULL
+CREATE OR REPLACE FUNCTION public.get_complex_stats(
+    target_start_date timestamp with time zone DEFAULT NULL::timestamp with time zone, 
+    target_end_date timestamp with time zone DEFAULT NULL::timestamp with time zone, 
+    target_player_id uuid DEFAULT NULL::uuid
 )
-RETURNS jsonb 
+RETURNS jsonb
 LANGUAGE plpgsql
 AS $function$
 DECLARE
-    result jsonb;
+    streaks_result jsonb;
+    positions_result jsonb;
+    pairs_result jsonb;
+    match_data_result jsonb;
 BEGIN
-    WITH match_data AS (
-        SELECT 
-            m.*,
-            CASE 
-                WHEN m.score_white > m.score_black THEN true 
-                ELSE false 
-            END as white_won
-        FROM matches m
-        WHERE CASE 
-            WHEN target_start_date IS NOT NULL AND target_end_date IS NOT NULL THEN
-                m.created_at::date BETWEEN target_start_date AND target_end_date
-            WHEN target_start_date IS NOT NULL THEN
-                DATE_TRUNC('month', m.created_at) = DATE_TRUNC('month', target_start_date)
-            ELSE true
-        END
-        ORDER BY m.created_at
-    ),
-    match_results AS (
+    -- Création de la table temporaire pour les données des matchs
+    CREATE TEMP TABLE IF NOT EXISTS temp_match_data ON COMMIT DROP AS
+    SELECT 
+        m.*,
+        CASE 
+            WHEN m.score_white > m.score_black THEN true 
+            ELSE false 
+        END as white_won
+    FROM matches m
+    WHERE CASE 
+        WHEN target_start_date IS NOT NULL AND target_end_date IS NOT NULL THEN
+            m.created_at::date BETWEEN target_start_date AND target_end_date
+        WHEN target_start_date IS NOT NULL THEN
+            DATE_TRUNC('month', m.created_at) = DATE_TRUNC('month', target_start_date)
+        ELSE true
+    END
+    ORDER BY m.created_at;
+
+    -- Calcul des séries
+    WITH match_results AS (
         SELECT 
             p.id as player_id,
             p.pseudo,
@@ -236,7 +241,7 @@ BEGIN
                 ELSE 'loss'
             END as result_type
         FROM players p
-        JOIN match_data m ON p.id IN (
+        JOIN temp_match_data m ON p.id IN (
             m.white_attacker, m.white_defender,
             m.black_attacker, m.black_defender
         )
@@ -263,8 +268,34 @@ BEGIN
         ) s
         GROUP BY player_id, pseudo, result_type, grp
         HAVING COUNT(*) >= 3
-    ),
-    position_stats AS (
+    )
+    SELECT jsonb_build_object(
+        'longest_win_streak', COALESCE((
+            SELECT jsonb_agg(jsonb_build_object(
+                'player_id', player_id,
+                'pseudo', pseudo,
+                'streak_length', streak_length,
+                'start_date', start_date,
+                'end_date', end_date
+            ) ORDER BY streak_length DESC, player_id)
+            FROM streaks
+            WHERE result_type = 'win' AND rnk = 1
+        ), '[]'::jsonb),
+        'longest_lose_streak', COALESCE((
+            SELECT jsonb_agg(jsonb_build_object(
+                'player_id', player_id,
+                'pseudo', pseudo,
+                'streak_length', streak_length,
+                'start_date', start_date,
+                'end_date', end_date
+            ) ORDER BY streak_length DESC, player_id)
+            FROM streaks
+            WHERE result_type = 'loss' AND rnk = 1
+        ), '[]'::jsonb)
+    ) INTO streaks_result;
+
+    -- Calcul des positions
+    WITH position_stats AS (
         SELECT 
             p.id as player_id,
             p.pseudo,
@@ -279,7 +310,7 @@ BEGIN
                 (m.white_won AND p.id = m.black_attacker)
             ) as defeats
         FROM players p
-        JOIN match_data m ON p.id IN (m.white_attacker, m.black_attacker)
+        JOIN temp_match_data m ON p.id IN (m.white_attacker, m.black_attacker)
         GROUP BY p.id, p.pseudo
         
         UNION ALL
@@ -298,7 +329,7 @@ BEGIN
                 (m.white_won AND p.id = m.black_defender)
             ) as defeats
         FROM players p
-        JOIN match_data m ON p.id IN (m.white_defender, m.black_defender)
+        JOIN temp_match_data m ON p.id IN (m.white_defender, m.black_defender)
         GROUP BY p.id, p.pseudo
     ),
     position_stats_ranked AS (
@@ -321,8 +352,60 @@ BEGIN
             ) as loss_rank
         FROM position_stats
         WHERE total_matches >= 5
-    ),
-    pair_stats AS (
+    )
+    SELECT jsonb_build_object(
+        'attacker', jsonb_build_object(
+            'best', COALESCE((
+                SELECT jsonb_agg(jsonb_build_object(
+                    'player_id', player_id,
+                    'pseudo', pseudo,
+                    'wins', victories,
+                    'total_matches', total_matches,
+                    'win_rate', win_rate
+                ) ORDER BY win_rate DESC, player_id)
+                FROM position_stats_ranked
+                WHERE position = 'attacker' AND win_rank = 1
+            ), '[]'::jsonb),
+            'worst', COALESCE((
+                SELECT jsonb_agg(jsonb_build_object(
+                    'player_id', player_id,
+                    'pseudo', pseudo,
+                    'defeats', defeats,
+                    'total_matches', total_matches,
+                    'loss_rate', loss_rate
+                ) ORDER BY loss_rate DESC, player_id)
+                FROM position_stats_ranked
+                WHERE position = 'attacker' AND loss_rank = 1
+            ), '[]'::jsonb)
+        ),
+        'defender', jsonb_build_object(
+            'best', COALESCE((
+                SELECT jsonb_agg(jsonb_build_object(
+                    'player_id', player_id,
+                    'pseudo', pseudo,
+                    'wins', victories,
+                    'total_matches', total_matches,
+                    'win_rate', win_rate
+                ) ORDER BY win_rate DESC, player_id)
+                FROM position_stats_ranked
+                WHERE position = 'defender' AND win_rank = 1
+            ), '[]'::jsonb),
+            'worst', COALESCE((
+                SELECT jsonb_agg(jsonb_build_object(
+                    'player_id', player_id,
+                    'pseudo', pseudo,
+                    'defeats', defeats,
+                    'total_matches', total_matches,
+                    'loss_rate', loss_rate
+                ) ORDER BY loss_rate DESC, player_id)
+                FROM position_stats_ranked
+                WHERE position = 'defender' AND loss_rank = 1
+            ), '[]'::jsonb)
+        )
+    ) INTO positions_result;
+
+    -- Calcul des paires
+    WITH pair_stats AS (
         SELECT 
             LEAST(p1.id, p2.id) as player1_id,
             GREATEST(p1.id, p2.id) as player2_id,
@@ -339,7 +422,7 @@ BEGIN
             ) as defeats
         FROM players p1
         CROSS JOIN players p2
-        JOIN match_data m ON 
+        JOIN temp_match_data m ON 
             (p1.id IN (m.white_attacker, m.white_defender) AND p2.id IN (m.white_attacker, m.white_defender)) OR
             (p1.id IN (m.black_attacker, m.black_defender) AND p2.id IN (m.black_attacker, m.black_defender))
         WHERE p1.id < p2.id
@@ -368,110 +451,42 @@ BEGIN
         WHERE total_matches >= 3
     )
     SELECT jsonb_build_object(
-        'streaks', jsonb_build_object(
-            'longest_win_streak', COALESCE((
-                SELECT jsonb_agg(jsonb_build_object(
-                    'player_id', player_id,
-                    'pseudo', pseudo,
-                    'streak_length', streak_length,
-                    'start_date', start_date,
-                    'end_date', end_date
-                ) ORDER BY streak_length DESC, player_id)
-                FROM streaks
-                WHERE result_type = 'win' AND rnk = 1
-            ), '[]'::jsonb),
-            'longest_lose_streak', COALESCE((
-                SELECT jsonb_agg(jsonb_build_object(
-                    'player_id', player_id,
-                    'pseudo', pseudo,
-                    'streak_length', streak_length,
-                    'start_date', start_date,
-                    'end_date', end_date
-                ) ORDER BY streak_length DESC, player_id)
-                FROM streaks
-                WHERE result_type = 'loss' AND rnk = 1
-            ), '[]'::jsonb)
-        ),
-        'positions', jsonb_build_object(
-            'attacker', jsonb_build_object(
-                'best', COALESCE((
-                    SELECT jsonb_agg(jsonb_build_object(
-                        'player_id', player_id,
-                        'pseudo', pseudo,
-                        'wins', victories,
-                        'total_matches', total_matches,
-                        'win_rate', win_rate
-                    ) ORDER BY win_rate DESC, player_id)
-                    FROM position_stats_ranked
-                    WHERE position = 'attacker' AND win_rank = 1
-                ), '[]'::jsonb),
-                'worst', COALESCE((
-                    SELECT jsonb_agg(jsonb_build_object(
-                        'player_id', player_id,
-                        'pseudo', pseudo,
-                        'defeats', defeats,
-                        'total_matches', total_matches,
-                        'loss_rate', loss_rate
-                    ) ORDER BY loss_rate DESC, player_id)
-                    FROM position_stats_ranked
-                    WHERE position = 'attacker' AND loss_rank = 1
-                ), '[]'::jsonb)
-            ),
-            'defender', jsonb_build_object(
-                'best', COALESCE((
-                    SELECT jsonb_agg(jsonb_build_object(
-                        'player_id', player_id,
-                        'pseudo', pseudo,
-                        'wins', victories,
-                        'total_matches', total_matches,
-                        'win_rate', win_rate
-                    ) ORDER BY win_rate DESC, player_id)
-                    FROM position_stats_ranked
-                    WHERE position = 'defender' AND win_rank = 1
-                ), '[]'::jsonb),
-                'worst', COALESCE((
-                    SELECT jsonb_agg(jsonb_build_object(
-                        'player_id', player_id,
-                        'pseudo', pseudo,
-                        'defeats', defeats,
-                        'total_matches', total_matches,
-                        'loss_rate', loss_rate
-                    ) ORDER BY loss_rate DESC, player_id)
-                    FROM position_stats_ranked
-                    WHERE position = 'defender' AND loss_rank = 1
-                ), '[]'::jsonb)
-            )
-        ),
-        'pairs', jsonb_build_object(
-            'best', COALESCE((
-                SELECT jsonb_agg(jsonb_build_object(
-                    'player1_id', player1_id,
-                    'player2_id', player2_id,
-                    'player1_pseudo', player1_pseudo,
-                    'player2_pseudo', player2_pseudo,
-                    'wins', victories,
-                    'total_matches', total_matches,
-                    'win_rate', win_rate
-                ) ORDER BY win_rate DESC, LEAST(player1_id, player2_id))
-                FROM pair_stats_ranked
-                WHERE win_rank = 1
-            ), '[]'::jsonb),
-            'worst', COALESCE((
-                SELECT jsonb_agg(jsonb_build_object(
-                    'player1_id', player1_id,
-                    'player2_id', player2_id,
-                    'player1_pseudo', player1_pseudo,
-                    'player2_pseudo', player2_pseudo,
-                    'defeats', defeats,
-                    'total_matches', total_matches,
-                    'loss_rate', loss_rate
-                ) ORDER BY loss_rate DESC, LEAST(player1_id, player2_id))
-                FROM pair_stats_ranked
-                WHERE loss_rank = 1
-            ), '[]'::jsonb)
-        )
-    ) INTO result;
+        'best', COALESCE((
+            SELECT jsonb_agg(jsonb_build_object(
+                'player1_id', player1_id,
+                'player2_id', player2_id,
+                'player1_pseudo', player1_pseudo,
+                'player2_pseudo', player2_pseudo,
+                'wins', victories,
+                'total_matches', total_matches,
+                'win_rate', win_rate
+            ) ORDER BY win_rate DESC, LEAST(player1_id, player2_id))
+            FROM pair_stats_ranked
+            WHERE win_rank = 1
+        ), '[]'::jsonb),
+        'worst', COALESCE((
+            SELECT jsonb_agg(jsonb_build_object(
+                'player1_id', player1_id,
+                'player2_id', player2_id,
+                'player1_pseudo', player1_pseudo,
+                'player2_pseudo', player2_pseudo,
+                'defeats', defeats,
+                'total_matches', total_matches,
+                'loss_rate', loss_rate
+            ) ORDER BY loss_rate DESC, LEAST(player1_id, player2_id))
+            FROM pair_stats_ranked
+            WHERE loss_rank = 1
+        ), '[]'::jsonb)
+    ) INTO pairs_result;
 
-    RETURN result;
+    -- Nettoyage de la table temporaire
+    DROP TABLE IF EXISTS temp_match_data;
+
+    -- Combinaison des résultats
+    RETURN jsonb_build_object(
+        'streaks', streaks_result,
+        'positions', positions_result,
+        'pairs', pairs_result
+    );
 END;
 $function$; 
