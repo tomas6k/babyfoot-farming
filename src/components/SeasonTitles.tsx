@@ -23,14 +23,16 @@ function TitleCard({
   description, 
   holders, 
   statValue, 
-  statTooltip 
+  statTooltip,
+  hasHolder = true
 }: { 
   badge: string,
   title: string, 
   description: string, 
-  holders: string | string[], // Modifié pour accepter un tableau
+  holders: string | string[], 
   statValue: string, 
-  statTooltip: string 
+  statTooltip: string,
+  hasHolder?: boolean
 }) {
   return (
     <Card className="overflow-hidden border-4 border-[#8B7355] dark:border-white">
@@ -46,13 +48,13 @@ function TitleCard({
                     alt={title} 
                     width={80} 
                     height={80} 
-                    className="object-contain"
+                    className={`object-contain ${!hasHolder ? 'grayscale' : ''}`}
                   />
                 </div>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{description}</p>
+              <p>{hasHolder ? description : '...'}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -64,38 +66,44 @@ function TitleCard({
               <h3 className="text-lg font-bold mb-2 text-center w-full">{title}</h3>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{description}</p>
+              <p>{hasHolder ? description : '...'}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
         
         {/* Tenants du titre */}
         <div className="text-center font-medium mb-3">
-          {Array.isArray(holders) ? (
-            holders.map((holder, index) => (
-              <div key={index}>
-                {holder}
-                {index < holders.length - 1 && <span className="mx-1">&</span>}
-              </div>
-            ))
+          {hasHolder ? (
+            Array.isArray(holders) ? (
+              holders.map((holder, index) => (
+                <div key={index}>
+                  {holder}
+                  {index < holders.length - 1 && <span className="mx-1">&</span>}
+                </div>
+              ))
+            ) : (
+              <p>{holders}</p>
+            )
           ) : (
-            <p>{holders}</p>
+            <p>???</p>
           )}
         </div>
         
-        {/* Statistique */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="bg-muted/50 px-3 py-1 rounded-full text-sm text-center">
-                {statValue}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{statTooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {/* Statistique - seulement affichée s'il y a un détenteur */}
+        {hasHolder && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="bg-muted/50 px-3 py-1 rounded-full text-sm text-center">
+                  {statValue}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{statTooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
     </Card>
   );
@@ -248,373 +256,387 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
         </Button>
       </div>
       
-      {/* Vérification globale pour afficher le message si aucune statistique n'est disponible */}
-      {!hasValidTeamTitles() && !hasValidPositionTitles() && !hasValidIndividualTitles() ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500">Aucune statistique disponible pour le moment</p>
+      <div className="space-y-8">
+        {/* Titres d'équipe - toujours afficher */}
+        <div className="space-y-6">
+          <h3 className="text-xl font-semibold text-left">Titres d'équipe</h3>
+          <div className="retro-grid-2">
+            {/* La Royauté */}
+            <TitleCard
+              badge="royaute"
+              title="La Royauté"
+              description="Meilleure paire de la saison"
+              holders={complexStats?.pairs?.best?.length > 0 ? 
+                complexStats.pairs.best.map(pair => `${pair.player1_pseudo} & ${pair.player2_pseudo}`) : 
+                []
+              }
+              statValue={
+                complexStats?.pairs?.best?.length > 0 
+                  ? `${formatStatValue(complexStats.pairs.best[0].win_rate, 'percentage')} taux B de réussite`
+                  : ''
+              }
+              statTooltip={
+                complexStats?.pairs?.best?.length > 0 
+                  ? `${complexStats.pairs.best[0].wins} victoires sur ${complexStats.pairs.best[0].total_matches} matchs`
+                  : ''
+              }
+              hasHolder={complexStats?.pairs?.best?.length > 0}
+            />
+
+            {/* Les Gueux */}
+            <TitleCard
+              badge="gueux"
+              title="Les Gueux"
+              description="Pire paire de la saison"
+              holders={complexStats?.pairs?.worst?.length > 0 ? 
+                complexStats.pairs.worst.map(pair => `${pair.player1_pseudo} & ${pair.player2_pseudo}`) :
+                []
+              }
+              statValue={
+                complexStats?.pairs?.worst?.length > 0 
+                  ? `${formatStatValue(complexStats.pairs.worst[0].loss_rate, 'percentage')} taux B d'échec`
+                  : ''
+              }
+              statTooltip={
+                complexStats?.pairs?.worst?.length > 0 
+                  ? `${complexStats.pairs.worst[0].defeats} défaites sur ${complexStats.pairs.worst[0].total_matches} matchs`
+                  : ''
+              }
+              hasHolder={complexStats?.pairs?.worst?.length > 0}
+            />
+          </div>
         </div>
-      ) : (
-        <>
-          {/* Titres d'équipe - afficher seulement s'il y a au moins un titre valide */}
-          {hasValidTeamTitles() && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-left">Titres d'équipe</h3>
-              <div className="retro-grid-2">
-                {/* La Royauté - afficher seulement si les données existent */}
-                {complexStats?.pairs?.best?.length > 0 && (
-                  <TitleCard
-                    badge="royaute"
-                    title="La Royauté"
-                    description="Meilleure paire de la saison"
-                    holders={
-                      complexStats.pairs.best.map(pair => 
-                        `${pair.player1_pseudo} & ${pair.player2_pseudo}`
-                      )
-                    }
-                    statValue={
-                      `${formatStatValue(complexStats.pairs.best[0].win_rate, 'percentage')} taux B de réussite`
-                    }
-                    statTooltip={
-                      `${complexStats.pairs.best[0].wins} victoires sur ${complexStats.pairs.best[0].total_matches} matchs`
-                    }
-                  />
-                )}
 
-                {/* Les Gueux - afficher seulement si les données existent */}
-                {complexStats?.pairs?.worst?.length > 0 && (
-                  <TitleCard
-                    badge="gueux"
-                    title="Les Gueux"
-                    description="Pire paire de la saison"
-                    holders={
-                      complexStats.pairs.worst.map(pair => 
-                        `${pair.player1_pseudo} & ${pair.player2_pseudo}`
-                      )
-                    }
-                    statValue={
-                      `${formatStatValue(complexStats.pairs.worst[0].loss_rate, 'percentage')} taux B d'échec`
-                    }
-                    statTooltip={
-                      `${complexStats.pairs.worst[0].defeats} défaites sur ${complexStats.pairs.worst[0].total_matches} matchs`
-                    }
-                  />
-                )}
-              </div>
+        {/* Titres par position - toujours afficher */}
+        <div className="space-y-6">
+          <h3 className="text-xl font-semibold text-left">Titres par position</h3>
+          <div className="retro-grid-4">
+            {/* Messire */}
+            <TitleCard
+              badge="messire"
+              title="Messire"
+              description="Meilleur attaquant de la saison"
+              holders={complexStats?.positions?.attacker?.best?.length > 0 ? getPlayerPseudos(complexStats.positions.attacker.best) : []}
+              statValue={
+                complexStats?.positions?.attacker?.best?.length > 0 
+                  ? `${formatStatValue(complexStats.positions.attacker.best[0].win_rate, 'percentage')} taux B de réussite`
+                  : ''
+              }
+              statTooltip={
+                complexStats?.positions?.attacker?.best?.length > 0 
+                  ? `${complexStats.positions.attacker.best[0].wins} victoires sur ${complexStats.positions.attacker.best[0].total_matches} matchs`
+                  : ''
+              }
+              hasHolder={complexStats?.positions?.attacker?.best?.length > 0}
+            />
 
-              {/* Le Classico - afficher seulement si les données existent */}
-              {historicalStats?.classicos?.length > 0 && (
-                <div className="mt-4">
-                  <Card className="overflow-hidden border-4 border-[#8B7355] dark:border-white">
-                    <div className="p-4">
-                      {/* Titre avec badge et description */}
-                      <div className="flex flex-col items-center mb-4">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex justify-center items-center h-20 w-20 mb-2">
-                                <Image 
-                                  src="/assets/badges/clasico.png" 
-                                  alt="Le Classico" 
-                                  width={80} 
-                                  height={80} 
-                                  className="object-contain"
-                                />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Les plus grandes rivalités</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <h3 className="text-lg font-bold mb-2 text-center w-full">Le Classico</h3>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Les plus grandes rivalités</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      
-                      {/* Liste des classicos */}
-                      <div className="space-y-4">
-                        <div className="border-t pt-3">
-                          <div className="text-center font-semibold">
-                            <span className="text-blue-500">
-                              {historicalStats.classicos[0].team1.player1_pseudo} & {historicalStats.classicos[0].team1.player2_pseudo}
-                            </span>
-                            <span className="mx-2">vs</span>
-                            <span className="text-red-500">
-                              {historicalStats.classicos[0].team2.player1_pseudo} & {historicalStats.classicos[0].team2.player2_pseudo}
-                            </span>
-                          </div>
-                          <div className="text-center text-sm text-gray-600 mt-1">
-                            {historicalStats.classicos[0].team1.victories} - {historicalStats.classicos[0].team2.victories}
-                          </div>
-                          <div className="text-center text-xs text-gray-500 mt-1">
-                            {historicalStats.classicos[0].total_matches} matchs joués
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              )}
-            </div>
-          )}
+            {/* Le Charpentier */}
+            <TitleCard
+              badge="charpentier"
+              title="Le Charpentier"
+              description="Pire attaquant de la saison"
+              holders={complexStats?.positions?.attacker?.worst?.length > 0 ? getPlayerPseudos(complexStats.positions.attacker.worst) : []}
+              statValue={
+                complexStats?.positions?.attacker?.worst?.length > 0 
+                  ? `${formatStatValue(complexStats.positions.attacker.worst[0].loss_rate, 'percentage')} taux B d'échec`
+                  : ''
+              }
+              statTooltip={
+                complexStats?.positions?.attacker?.worst?.length > 0 
+                  ? `${complexStats.positions.attacker.worst[0].defeats} défaites sur ${complexStats.positions.attacker.worst[0].total_matches} matchs`
+                  : ''
+              }
+              hasHolder={complexStats?.positions?.attacker?.worst?.length > 0}
+            />
 
-          {/* Titres par position - afficher seulement s'il y a au moins un titre valide */}
-          {hasValidPositionTitles() && (
-            <div className="space-y-6 mt-8">
-              <h3 className="text-xl font-semibold text-left">Titres par position</h3>
-              <div className="retro-grid-4">
-                {/* Messire - afficher seulement si les données existent */}
-                {complexStats?.positions?.attacker?.best?.length > 0 && (
-                  <TitleCard
-                    badge="messire"
-                    title="Messire"
-                    description="Meilleur attaquant de la saison"
-                    holders={getPlayerPseudos(complexStats.positions.attacker.best)}
-                    statValue={
-                      `${formatStatValue(complexStats.positions.attacker.best[0].win_rate, 'percentage')} taux B de réussite`
-                    }
-                    statTooltip={
-                      `${complexStats.positions.attacker.best[0].wins} victoires sur ${complexStats.positions.attacker.best[0].total_matches} matchs`
-                    }
-                  />
-                )}
+            {/* Monseigneur */}
+            <TitleCard
+              badge="monseigneur"
+              title="Monseigneur"
+              description="Meilleur défenseur de la saison"
+              holders={complexStats?.positions?.defender?.best?.length > 0 ? getPlayerPseudos(complexStats.positions.defender.best) : []}
+              statValue={
+                complexStats?.positions?.defender?.best?.length > 0 
+                  ? `${formatStatValue(complexStats.positions.defender.best[0].win_rate, 'percentage')} taux B de réussite`
+                  : ''
+              }
+              statTooltip={
+                complexStats?.positions?.defender?.best?.length > 0 
+                  ? `${complexStats.positions.defender.best[0].wins} victoires sur ${complexStats.positions.defender.best[0].total_matches} matchs`
+                  : ''
+              }
+              hasHolder={complexStats?.positions?.defender?.best?.length > 0}
+            />
 
-                {/* Le Charpentier - afficher seulement si les données existent */}
-                {complexStats?.positions?.attacker?.worst?.length > 0 && (
-                  <TitleCard
-                    badge="charpentier"
-                    title="Le Charpentier"
-                    description="Pire attaquant de la saison"
-                    holders={getPlayerPseudos(complexStats.positions.attacker.worst)}
-                    statValue={
-                      `${formatStatValue(complexStats.positions.attacker.worst[0].loss_rate, 'percentage')} taux B d'échec`
-                    }
-                    statTooltip={
-                      `${complexStats.positions.attacker.worst[0].defeats} défaites sur ${complexStats.positions.attacker.worst[0].total_matches} matchs`
-                    }
-                  />
-                )}
+            {/* Le Boulanger */}
+            <TitleCard
+              badge="boulanger"
+              title="Le Boulanger"
+              description="Pire défenseur de la saison"
+              holders={complexStats?.positions?.defender?.worst?.length > 0 ? getPlayerPseudos(complexStats.positions.defender.worst) : []}
+              statValue={
+                complexStats?.positions?.defender?.worst?.length > 0 
+                  ? `${formatStatValue(complexStats.positions.defender.worst[0].loss_rate, 'percentage')} taux B d'échec`
+                  : ''
+              }
+              statTooltip={
+                complexStats?.positions?.defender?.worst?.length > 0 
+                  ? `${complexStats.positions.defender.worst[0].defeats} défaites sur ${complexStats.positions.defender.worst[0].total_matches} matchs`
+                  : ''
+              }
+              hasHolder={complexStats?.positions?.defender?.worst?.length > 0}
+            />
+          </div>
+        </div>
 
-                {/* Monseigneur - afficher seulement si les données existent */}
-                {complexStats?.positions?.defender?.best?.length > 0 && (
-                  <TitleCard
-                    badge="monseigneur"
-                    title="Monseigneur"
-                    description="Meilleur défenseur de la saison"
-                    holders={getPlayerPseudos(complexStats.positions.defender.best)}
-                    statValue={
-                      `${formatStatValue(complexStats.positions.defender.best[0].win_rate, 'percentage')} taux B de réussite`
-                    }
-                    statTooltip={
-                      `${complexStats.positions.defender.best[0].wins} victoires sur ${complexStats.positions.defender.best[0].total_matches} matchs`
-                    }
-                  />
-                )}
+        {/* Titres individuels - toujours afficher */}
+        <div className="space-y-6">
+          <h3 className="text-xl font-semibold text-left">Titres individuels</h3>
+          <div className="retro-grid-4">
+            {/* L'Excalibur */}
+            <TitleCard
+              badge="excalibur"
+              title="L'Excalibur"
+              description="Victoires 10-0 les plus fréquentes"
+              holders={baseStats?.perfect_wins?.length > 0 ? getPlayerPseudos(baseStats.perfect_wins) : []}
+              statValue={
+                baseStats?.perfect_wins?.length > 0 
+                  ? `${baseStats.perfect_wins[0].count} victoires parfaites`
+                  : ''
+              }
+              statTooltip="Nombre de matchs gagnés 10-0"
+              hasHolder={baseStats?.perfect_wins?.length > 0}
+            />
 
-                {/* Le Boulanger - afficher seulement si les données existent */}
-                {complexStats?.positions?.defender?.worst?.length > 0 && (
-                  <TitleCard
-                    badge="boulanger"
-                    title="Le Boulanger"
-                    description="Pire défenseur de la saison"
-                    holders={getPlayerPseudos(complexStats.positions.defender.worst)}
-                    statValue={
-                      `${formatStatValue(complexStats.positions.defender.worst[0].loss_rate, 'percentage')} taux B d'échec`
-                    }
-                    statTooltip={
-                      `${complexStats.positions.defender.worst[0].defeats} défaites sur ${complexStats.positions.defender.worst[0].total_matches} matchs`
-                    }
-                  />
-                )}
-              </div>
-            </div>
-          )}
+            {/* Le Bâton du Paysan */}
+            <TitleCard
+              badge="baton"
+              title="Le Bâton du Paysan"
+              description="Défaites 10-0 les plus fréquentes"
+              holders={baseStats?.perfect_losses?.length > 0 ? getPlayerPseudos(baseStats.perfect_losses) : []}
+              statValue={
+                baseStats?.perfect_losses?.length > 0 
+                  ? `${baseStats.perfect_losses[0].count} défaites parfaites`
+                  : ''
+              }
+              statTooltip="Nombre de matchs perdus 0-10"
+              hasHolder={baseStats?.perfect_losses?.length > 0}
+            />
 
-          {/* Titres individuels - afficher seulement s'il y a au moins un titre valide */}
-          {hasValidIndividualTitles() && (
-            <div className="space-y-6 mt-8">
-              <h3 className="text-xl font-semibold text-left">Titres individuels</h3>
-              <div className="retro-grid-4">
-                {/* L'Excalibur - afficher seulement si les données existent */}
-                {baseStats?.perfect_wins?.length > 0 && (
-                  <TitleCard
-                    badge="excalibur"
-                    title="L'Excalibur"
-                    description="Victoires 10-0 les plus fréquentes"
-                    holders={getPlayerPseudos(baseStats.perfect_wins)}
-                    statValue={`${baseStats.perfect_wins[0].count} victoires parfaites`}
-                    statTooltip="Nombre de matchs gagnés 10-0"
-                  />
-                )}
+            {/* Touché par la Grâce */}
+            <TitleCard
+              badge="grace"
+              title="Touché par la Grâce"
+              description="Victoires 10-9 les plus fréquentes"
+              holders={baseStats?.close_wins?.length > 0 ? getPlayerPseudos(baseStats.close_wins) : []}
+              statValue={
+                baseStats?.close_wins?.length > 0 
+                  ? `${baseStats.close_wins[0].count} victoires serrées`
+                  : ''
+              }
+              statTooltip="Nombre de matchs gagnés 10-9"
+              hasHolder={baseStats?.close_wins?.length > 0}
+            />
 
-                {/* Le Bâton du Paysan - afficher seulement si les données existent */}
-                {baseStats?.perfect_losses?.length > 0 && (
-                  <TitleCard
-                    badge="baton"
-                    title="Le Bâton du Paysan"
-                    description="Défaites 10-0 les plus fréquentes"
-                    holders={getPlayerPseudos(baseStats.perfect_losses)}
-                    statValue={`${baseStats.perfect_losses[0].count} défaites parfaites`}
-                    statTooltip="Nombre de matchs perdus 0-10"
-                  />
-                )}
+            {/* Le Damné */}
+            <TitleCard
+              badge="damne"
+              title="Le Damné"
+              description="Défaites 10-9 les plus fréquentes"
+              holders={baseStats?.close_losses?.length > 0 ? getPlayerPseudos(baseStats.close_losses) : []}
+              statValue={
+                baseStats?.close_losses?.length > 0 
+                  ? `${baseStats.close_losses[0].count} défaites serrées`
+                  : ''
+              }
+              statTooltip="Nombre de matchs perdus 9-10"
+              hasHolder={baseStats?.close_losses?.length > 0}
+            />
 
-                {/* Touché par la Grâce */}
-                {baseStats?.close_wins?.length > 0 && (
-                  <TitleCard
-                    badge="grace"
-                    title="Touché par la Grâce"
-                    description="Victoires 10-9 les plus fréquentes"
-                    holders={getPlayerPseudos(baseStats.close_wins)}
-                    statValue={`${baseStats.close_wins[0].count} victoires serrées`}
-                    statTooltip="Nombre de matchs gagnés 10-9"
-                  />
-                )}
+            {/* La Dynastie */}
+            <TitleCard
+              badge="dynastie"
+              title="La Dynastie"
+              description="Plus longue série de victoires"
+              holders={complexStats?.streaks?.longest_win_streak?.length > 0 ? getPlayerPseudos(complexStats.streaks.longest_win_streak) : []}
+              statValue={
+                complexStats?.streaks?.longest_win_streak?.length > 0 
+                  ? `${complexStats.streaks.longest_win_streak[0].streak_length} victoires d'affilées`
+                  : ''
+              }
+              statTooltip={
+                complexStats?.streaks?.longest_win_streak?.length > 0 
+                  ? `Du ${new Date(complexStats.streaks.longest_win_streak[0].start_date).toLocaleDateString()} au ${new Date(complexStats.streaks.longest_win_streak[0].end_date).toLocaleDateString()}`
+                  : ''
+              }
+              hasHolder={complexStats?.streaks?.longest_win_streak?.length > 0}
+            />
 
-                {/* Le Damné */}
-                {baseStats?.close_losses?.length > 0 && (
-                  <TitleCard
-                    badge="damne"
-                    title="Le Damné"
-                    description="Défaites 10-9 les plus fréquentes"
-                    holders={getPlayerPseudos(baseStats.close_losses)}
-                    statValue={`${baseStats.close_losses[0].count} défaites serrées`}
-                    statTooltip="Nombre de matchs perdus 9-10"
-                  />
-                )}
+            {/* Le Bouffon du Roi */}
+            <TitleCard
+              badge="bouffon"
+              title="Le Bouffon du Roi"
+              description="Plus longue série de défaites"
+              holders={complexStats?.streaks?.longest_lose_streak?.length > 0 ? getPlayerPseudos(complexStats.streaks.longest_lose_streak) : []}
+              statValue={
+                complexStats?.streaks?.longest_lose_streak?.length > 0 
+                  ? `${complexStats.streaks.longest_lose_streak[0].streak_length} défaites d'affilées`
+                  : ''
+              }
+              statTooltip={
+                complexStats?.streaks?.longest_lose_streak?.length > 0 
+                  ? `Du ${new Date(complexStats.streaks.longest_lose_streak[0].start_date).toLocaleDateString()} au ${new Date(complexStats.streaks.longest_lose_streak[0].end_date).toLocaleDateString()}`
+                  : ''
+              }
+              hasHolder={complexStats?.streaks?.longest_lose_streak?.length > 0}
+            />
 
-                {/* La Dynastie */}
-                {complexStats?.streaks?.longest_win_streak?.length > 0 && (
-                  <TitleCard
-                    badge="dynastie"
-                    title="La Dynastie"
-                    description="Plus longue série de victoires"
-                    holders={getPlayerPseudos(complexStats.streaks.longest_win_streak)}
-                    statValue={`${complexStats.streaks.longest_win_streak[0].streak_length} victoires d'affilées`}
-                    statTooltip={`Du ${new Date(complexStats.streaks.longest_win_streak[0].start_date).toLocaleDateString()} au ${new Date(complexStats.streaks.longest_win_streak[0].end_date).toLocaleDateString()}`}
-                  />
-                )}
+            {/* Le Précheur */}
+            <TitleCard
+              badge="precheur"
+              title="Le Précheur"
+              description="Joueur le plus actif"
+              holders={baseStats?.activity?.most_active?.length > 0 ? getPlayerPseudos(baseStats.activity.most_active) : []}
+              statValue={
+                baseStats?.activity?.most_active?.length > 0 
+                  ? `${baseStats.activity.most_active[0].match_count} matchs`
+                  : ''
+              }
+              statTooltip="Nombre total de matchs joués"
+              hasHolder={baseStats?.activity?.most_active?.length > 0}
+            />
 
-                {/* Le Bouffon du Roi */}
-                {complexStats?.streaks?.longest_lose_streak?.length > 0 && (
-                  <TitleCard
-                    badge="bouffon"
-                    title="Le Bouffon du Roi"
-                    description="Plus longue série de défaites"
-                    holders={getPlayerPseudos(complexStats.streaks.longest_lose_streak)}
-                    statValue={`${complexStats.streaks.longest_lose_streak[0].streak_length} défaites d'affilées`}
-                    statTooltip={`Du ${new Date(complexStats.streaks.longest_lose_streak[0].start_date).toLocaleDateString()} au ${new Date(complexStats.streaks.longest_lose_streak[0].end_date).toLocaleDateString()}`}
-                  />
-                )}
+            {/* Le Fantôme */}
+            <TitleCard
+              badge="fantome"
+              title="Le Fantôme"
+              description="Joueur le moins actif"
+              holders={baseStats?.activity?.least_active?.length > 0 ? getPlayerPseudos(baseStats.activity.least_active) : []}
+              statValue={
+                baseStats?.activity?.least_active?.length > 0 
+                  ? `${baseStats.activity.least_active[0].match_count} matchs`
+                  : ''
+              }
+              statTooltip="Nombre total de matchs joués"
+              hasHolder={baseStats?.activity?.least_active?.length > 0}
+            />
 
-                {/* Le Précheur */}
-                {baseStats?.activity?.most_active?.length > 0 && (
-                  <TitleCard
-                    badge="precheur"
-                    title="Le Précheur"
-                    description="Joueur le plus actif"
-                    holders={getPlayerPseudos(baseStats.activity.most_active)}
-                    statValue={`${baseStats.activity.most_active[0].match_count} matchs`}
-                    statTooltip="Nombre total de matchs joués"
-                  />
-                )}
+            {/* Karadoc */}
+            <TitleCard
+              badge="karadoc"
+              title="Karadoc"
+              description="Champion des matchs entre 12h et 14h30"
+              holders={historicalStats?.dessert?.length > 0 ? getPlayerPseudos(historicalStats.dessert) : []}
+              statValue={
+                historicalStats?.dessert?.length > 0 
+                  ? `${formatStatValue(historicalStats.dessert[0].win_rate, 'percentage')} taux B de réussite`
+                  : ''
+              }
+              statTooltip={
+                historicalStats?.dessert?.length > 0 
+                  ? `${historicalStats.dessert[0].victories} victoires sur ${historicalStats.dessert[0].total_matches} matchs`
+                  : ''
+              }
+              hasHolder={historicalStats?.dessert?.length > 0}
+            />
 
-                {/* Le Fantôme */}
-                {baseStats?.activity?.least_active?.length > 0 && (
-                  <TitleCard
-                    badge="fantome"
-                    title="Le Fantôme"
-                    description="Joueur le moins actif"
-                    holders={getPlayerPseudos(baseStats.activity.least_active)}
-                    statValue={`${baseStats.activity.least_active[0].match_count} matchs`}
-                    statTooltip="Nombre total de matchs joués"
-                  />
-                )}
+            {/* Le Dessert */}
+            <TitleCard
+              badge="dessert"
+              title="Le Dessert"
+              description="Perdant des matchs entre 12h et 14h30"
+              holders={historicalStats?.dessert_looser?.length > 0 ? getPlayerPseudos(historicalStats.dessert_looser) : []}
+              statValue={
+                historicalStats?.dessert_looser?.length > 0 
+                  ? `${formatStatValue(historicalStats.dessert_looser[0].loss_rate, 'percentage')} taux B d'échec`
+                  : ''
+              }
+              statTooltip={
+                historicalStats?.dessert_looser?.length > 0 
+                  ? `${historicalStats.dessert_looser[0].defeats} défaites sur ${historicalStats.dessert_looser[0].total_matches} matchs`
+                  : ''
+              }
+              hasHolder={historicalStats?.dessert_looser?.length > 0}
+            />
 
-                {/* Karadoc */}
-                {historicalStats?.dessert?.length > 0 && (
-                  <TitleCard
-                    badge="karadoc"
-                    title="Karadoc"
-                    description="Champion des matchs entre 12h et 14h30"
-                    holders={getPlayerPseudos(historicalStats.dessert)}
-                    statValue={`${formatStatValue(historicalStats.dessert[0].win_rate, 'percentage')} taux B de réussite`}
-                    statTooltip={`${historicalStats.dessert[0].victories} victoires sur ${historicalStats.dessert[0].total_matches} matchs`}
-                  />
-                )}
+            {/* Le Premier Sang */}
+            <TitleCard
+              badge="premier-sang"
+              title="Le Premier Sang"
+              description="Première victoire du lundi"
+              holders={historicalStats?.first_blood?.length > 0 ? getPlayerPseudos(historicalStats.first_blood) : []}
+              statValue={
+                historicalStats?.first_blood?.length > 0 
+                  ? formatStatValue(historicalStats.first_blood[0].win_rate, 'percentage')
+                  : ''
+              }
+              statTooltip={
+                historicalStats?.first_blood?.length > 0 
+                  ? `${historicalStats.first_blood[0].victories} victoires sur ${historicalStats.first_blood[0].total_first_matches} matchs`
+                  : ''
+              }
+              hasHolder={historicalStats?.first_blood?.length > 0}
+            />
 
-                {/* Le Dessert */}
-                {historicalStats?.dessert_looser?.length > 0 && (
-                  <TitleCard
-                    badge="dessert"
-                    title="Le Dessert"
-                    description="Perdant des matchs entre 12h et 14h30"
-                    holders={getPlayerPseudos(historicalStats.dessert_looser)}
-                    statValue={`${formatStatValue(historicalStats.dessert_looser[0].loss_rate, 'percentage')} taux B d'échec`}
-                    statTooltip={`${historicalStats.dessert_looser[0].defeats} défaites sur ${historicalStats.dessert_looser[0].total_matches} matchs`}
-                  />
-                )}
+            {/* Le Comte de Monte-Cristo */}
+            <TitleCard
+              badge="monte-cristo"
+              title="Le Comte de Monte-Cristo"
+              description="Meilleur vengeur"
+              holders={historicalStats?.monte_cristo?.length > 0 ? getPlayerPseudos(historicalStats.monte_cristo) : []}
+              statValue={
+                historicalStats?.monte_cristo?.length > 0 
+                  ? `${historicalStats.monte_cristo[0].revenge_wins}/${historicalStats.monte_cristo[0].revenge_opportunities} vengeances`
+                  : ''
+              }
+              statTooltip={
+                historicalStats?.monte_cristo?.length > 0 
+                  ? `Taux de vengeance : ${formatStatValue(historicalStats.monte_cristo[0].revenge_rate, 'percentage')}`
+                  : ''
+              }
+              hasHolder={historicalStats?.monte_cristo?.length > 0}
+            />
 
-                {/* Le Premier Sang */}
-                {historicalStats?.first_blood?.length > 0 && (
-                  <TitleCard
-                    badge="premier-sang"
-                    title="Le Premier Sang"
-                    description="Première victoire du lundi"
-                    holders={getPlayerPseudos(historicalStats.first_blood)}
-                    statValue={formatStatValue(historicalStats.first_blood[0].win_rate, 'percentage')}
-                    statTooltip={`${historicalStats.first_blood[0].victories} victoires sur ${historicalStats.first_blood[0].total_first_matches} matchs`}
-                  />
-                )}
+            {/* L'Esclave */}
+            <TitleCard
+              badge="esclave"
+              title="L'Esclave"
+              description="Joueur le plus fidèle à ses partenaires"
+              holders={historicalStats?.fidele?.length > 0 ? getPlayerPseudos(historicalStats.fidele) : []}
+              statValue={
+                historicalStats?.fidele?.length > 0 
+                  ? `${historicalStats.fidele[0].matches_together}/${historicalStats.fidele[0].total_matches} matchs avec ${historicalStats.fidele[0].favorite_partner_pseudo}`
+                  : ''
+              }
+              statTooltip={
+                historicalStats?.fidele?.length > 0 
+                  ? `Taux de fidélité : ${formatStatValue(historicalStats.fidele[0].fidelity_rate, 'percentage')}`
+                  : ''
+              }
+              hasHolder={historicalStats?.fidele?.length > 0}
+            />
 
-                {/* Le Comte de Monte-Cristo */}
-                {historicalStats?.monte_cristo?.length > 0 && (
-                  <TitleCard
-                    badge="monte-cristo"
-                    title="Le Comte de Monte-Cristo"
-                    description="Meilleur vengeur"
-                    holders={getPlayerPseudos(historicalStats.monte_cristo)}
-                    statValue={`${historicalStats.monte_cristo[0].revenge_wins}/${historicalStats.monte_cristo[0].revenge_opportunities} vengeances`}
-                    statTooltip={`Taux de vengeance : ${formatStatValue(historicalStats.monte_cristo[0].revenge_rate, 'percentage')}`}
-                  />
-                )}
-
-                {/* L'Esclave */}
-                {historicalStats?.fidele?.length > 0 && (
-                  <TitleCard
-                    badge="esclave"
-                    title="L'Esclave"
-                    description="Joueur le plus fidèle à ses partenaires"
-                    holders={getPlayerPseudos(historicalStats.fidele)}
-                    statValue={`${historicalStats.fidele[0].matches_together}/${historicalStats.fidele[0].total_matches} matchs avec ${historicalStats.fidele[0].favorite_partner_pseudo}`}
-                    statTooltip={`Taux de fidélité : ${formatStatValue(historicalStats.fidele[0].fidelity_rate, 'percentage')}`}
-                  />
-                )}
-
-                {/* Le Casanova */}
-                {historicalStats?.casanova?.length > 0 && (
-                  <TitleCard
-                    badge="casanova"
-                    title="Le Casanova"
-                    description="Change le plus souvent de partenaire"
-                    holders={getPlayerPseudos(historicalStats.casanova)}
-                    statValue={`${historicalStats.casanova[0].distinct_partners} partenaires sur ${historicalStats.casanova[0].total_matches} matchs`}
-                    statTooltip={`Taux de changement : ${formatStatValue(historicalStats.casanova[0].partner_change_rate, 'percentage')}`}
-                  />
-                )}
-              </div>
-            </div>
-          )}
-        </>
-      )}
+            {/* Le Casanova */}
+            <TitleCard
+              badge="casanova"
+              title="Le Casanova"
+              description="Change le plus souvent de partenaire"
+              holders={historicalStats?.casanova?.length > 0 ? getPlayerPseudos(historicalStats.casanova) : []}
+              statValue={
+                historicalStats?.casanova?.length > 0 
+                  ? `${historicalStats.casanova[0].distinct_partners} partenaires sur ${historicalStats.casanova[0].total_matches} matchs`
+                  : ''
+              }
+              statTooltip={
+                historicalStats?.casanova?.length > 0 
+                  ? `Taux de changement : ${formatStatValue(historicalStats.casanova[0].partner_change_rate, 'percentage')}`
+                  : ''
+              }
+              hasHolder={historicalStats?.casanova?.length > 0}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 
