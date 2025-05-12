@@ -40,7 +40,7 @@ export default function DashboardClient({ stats }: DashboardClientProps) {
         </Button>
       </div>
       
-      <LeaderboardTable period={currentMonth} stats={stats} key={`leaderboard-${refreshCounter}`} />
+      <LeaderboardTable period={currentMonthISO} stats={stats} key={`leaderboard-${refreshCounter}`} />
       <SeasonTitles month={currentMonthISO} key={`season-${refreshCounter}`} />
     </div>
   );
