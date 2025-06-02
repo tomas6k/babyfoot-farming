@@ -232,21 +232,21 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="La Royauté"
             description="Meilleure paire de la saison"
             holders={
-              complexStats.pairs.best.length > 0
+              complexStats.pairs?.best?.length > 0
                 ? `${complexStats.pairs.best[0].player1_pseudo} & ${complexStats.pairs.best[0].player2_pseudo}`
                 : "Pas encore de royauté"
             }
             statValue={
-              complexStats.pairs.best.length > 0
+              complexStats.pairs?.best?.length > 0
                 ? `${formatStatValue(complexStats.pairs.best[0].win_rate, 'percentage')} taux B de réussite`
                 : "N/A"
             }
             statTooltip={
-              complexStats.pairs.best.length > 0
+              complexStats.pairs?.best?.length > 0
                 ? `${complexStats.pairs.best[0].wins} victoires sur ${complexStats.pairs.best[0].total_matches} matchs`
                 : "N/A"
             }
-            hasHolder={complexStats.pairs.best.length > 0}
+            hasHolder={complexStats.pairs?.best?.length > 0}
           />
 
           {/* Les Gueux */}
@@ -255,21 +255,21 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Les Gueux"
             description="Pire paire de la saison"
             holders={
-              complexStats.pairs.worst.length > 0
+              complexStats.pairs?.worst?.length > 0
                 ? `${complexStats.pairs.worst[0].player1_pseudo} & ${complexStats.pairs.worst[0].player2_pseudo}`
                 : "Pas encore de gueux"
             }
             statValue={
-              complexStats.pairs.worst.length > 0
+              complexStats.pairs?.worst?.length > 0
                 ? `${formatStatValue(complexStats.pairs.worst[0].loss_rate, 'percentage')} taux B d'échec`
                 : "N/A"
             }
             statTooltip={
-              complexStats.pairs.worst.length > 0
+              complexStats.pairs?.worst?.length > 0
                 ? `${complexStats.pairs.worst[0].defeats} défaites sur ${complexStats.pairs.worst[0].total_matches} matchs`
                 : "N/A"
             }
-            hasHolder={hasTitleHolder(complexStats.pairs.worst)}
+            hasHolder={hasTitleHolder(complexStats.pairs?.worst)}
           />
         </div>
 
@@ -349,21 +349,21 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Messire"
             description="Meilleur attaquant de la saison"
             holders={
-              complexStats.positions.attacker.best.length > 0
+              complexStats.positions?.attacker?.best?.length > 0
                 ? complexStats.positions.attacker.best[0].pseudo
                 : "Pas encore de messire"
             }
             statValue={
-              complexStats.positions.attacker.best.length > 0
+              complexStats.positions?.attacker?.best?.length > 0
                 ? `${formatStatValue(complexStats.positions.attacker.best[0].win_rate, 'percentage')} taux B de réussite`
                 : "N/A"
             }
             statTooltip={
-              complexStats.positions.attacker.best.length > 0
+              complexStats.positions?.attacker?.best?.length > 0
                 ? `${complexStats.positions.attacker.best[0].wins} victoires sur ${complexStats.positions.attacker.best[0].total_matches} matchs`
                 : "N/A"
             }
-            hasHolder={hasTitleHolder(complexStats.positions.attacker.best)}
+            hasHolder={hasTitleHolder(complexStats.positions?.attacker?.best)}
           />
 
           {/* Le Charpentier */}
@@ -372,21 +372,21 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Le Charpentier"
             description="Pire attaquant de la saison"
             holders={
-              complexStats.positions.attacker.worst.length > 0
+              complexStats.positions?.attacker?.worst?.length > 0
                 ? complexStats.positions.attacker.worst[0].pseudo
                 : "Pas encore de charpentier"
             }
             statValue={
-              complexStats.positions.attacker.worst.length > 0
+              complexStats.positions?.attacker?.worst?.length > 0
                 ? `${formatStatValue(complexStats.positions.attacker.worst[0].loss_rate, 'percentage')} taux B d'échec`
                 : "N/A"
             }
             statTooltip={
-              complexStats.positions.attacker.worst.length > 0
+              complexStats.positions?.attacker?.worst?.length > 0
                 ? `${complexStats.positions.attacker.worst[0].defeats} défaites sur ${complexStats.positions.attacker.worst[0].total_matches} matchs`
                 : "N/A"
             }
-            hasHolder={hasTitleHolder(complexStats.positions.attacker.worst)}
+            hasHolder={hasTitleHolder(complexStats.positions?.attacker?.worst)}
           />
 
           {/* Monseigneur */}
@@ -395,21 +395,21 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Monseigneur"
             description="Meilleur défenseur de la saison"
             holders={
-              complexStats.positions.defender.best.length > 0
+              complexStats.positions?.defender?.best?.length > 0
                 ? complexStats.positions.defender.best[0].pseudo
                 : "Pas encore de monseigneur"
             }
             statValue={
-              complexStats.positions.defender.best.length > 0
+              complexStats.positions?.defender?.best?.length > 0
                 ? `${formatStatValue(complexStats.positions.defender.best[0].win_rate, 'percentage')} taux B de réussite`
                 : "N/A"
             }
             statTooltip={
-              complexStats.positions.defender.best.length > 0
+              complexStats.positions?.defender?.best?.length > 0
                 ? `${complexStats.positions.defender.best[0].wins} victoires sur ${complexStats.positions.defender.best[0].total_matches} matchs`
                 : "N/A"
             }
-            hasHolder={hasTitleHolder(complexStats.positions.defender.best)}
+            hasHolder={hasTitleHolder(complexStats.positions?.defender?.best)}
           />
 
           {/* Le Boulanger */}
@@ -418,21 +418,21 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Le Boulanger"
             description="Pire défenseur de la saison"
             holders={
-              complexStats.positions.defender.worst.length > 0
+              complexStats.positions?.defender?.worst?.length > 0
                 ? complexStats.positions.defender.worst[0].pseudo
                 : "Pas encore de boulanger"
             }
             statValue={
-              complexStats.positions.defender.worst.length > 0
+              complexStats.positions?.defender?.worst?.length > 0
                 ? `${formatStatValue(complexStats.positions.defender.worst[0].loss_rate, 'percentage')} taux B d'échec`
                 : "N/A"
             }
             statTooltip={
-              complexStats.positions.defender.worst.length > 0
+              complexStats.positions?.defender?.worst?.length > 0
                 ? `${complexStats.positions.defender.worst[0].defeats} défaites sur ${complexStats.positions.defender.worst[0].total_matches} matchs`
                 : "N/A"
             }
-            hasHolder={hasTitleHolder(complexStats.positions.defender.worst)}
+            hasHolder={hasTitleHolder(complexStats.positions?.defender?.worst)}
           />
         </div>
       </div>
@@ -447,17 +447,17 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="L'Excalibur"
             description="Victoires 10-0 les plus fréquentes"
             holders={
-              baseStats.perfect_wins.length > 0
+              baseStats?.perfect_wins?.length > 0
                 ? getPlayerPseudos(baseStats.perfect_wins)
                 : "Pas encore de perfect"
             }
             statValue={
-              baseStats.perfect_wins.length > 0
+              baseStats?.perfect_wins?.length > 0
                 ? `${baseStats.perfect_wins[0].count} victoires parfaites`
                 : "0"
             }
             statTooltip="Nombre de matchs gagnés 10-0"
-            hasHolder={hasTitleHolder(baseStats.perfect_wins)}
+            hasHolder={hasTitleHolder(baseStats?.perfect_wins)}
           />
 
           {/* Le Bâton du Paysan */}
@@ -466,17 +466,17 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Le Bâton du Paysan"
             description="Défaites 10-0 les plus fréquentes"
             holders={
-              baseStats.perfect_losses.length > 0
+              baseStats?.perfect_losses?.length > 0
                 ? getPlayerPseudos(baseStats.perfect_losses)
                 : "Pas encore de défaite parfaite"
             }
             statValue={
-              baseStats.perfect_losses.length > 0
+              baseStats?.perfect_losses?.length > 0
                 ? `${baseStats.perfect_losses[0].count} défaites parfaites`
                 : "0"
             }
             statTooltip="Nombre de matchs perdus 0-10"
-            hasHolder={hasTitleHolder(baseStats.perfect_losses)}
+            hasHolder={hasTitleHolder(baseStats?.perfect_losses)}
           />
 
           {/* Touché par la Grâce */}
@@ -485,17 +485,17 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Touché par la Grâce"
             description="Victoires 10-9 les plus fréquentes"
             holders={
-              baseStats.close_wins.length > 0
+              baseStats?.close_wins?.length > 0
                 ? getPlayerPseudos(baseStats.close_wins)
                 : "Pas encore de match serré gagné"
             }
             statValue={
-              baseStats.close_wins.length > 0
+              baseStats?.close_wins?.length > 0
                 ? `${baseStats.close_wins[0].count} victoires serrées`
                 : "0"
             }
             statTooltip="Nombre de matchs gagnés 10-9"
-            hasHolder={hasTitleHolder(baseStats.close_wins)}
+            hasHolder={hasTitleHolder(baseStats?.close_wins)}
           />
 
           {/* Le Damné */}
@@ -504,17 +504,17 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Le Damné"
             description="Défaites 10-9 les plus fréquentes"
             holders={
-              baseStats.close_losses.length > 0
+              baseStats?.close_losses?.length > 0
                 ? getPlayerPseudos(baseStats.close_losses)
                 : "Pas encore de match serré perdu"
             }
             statValue={
-              baseStats.close_losses.length > 0
+              baseStats?.close_losses?.length > 0
                 ? `${baseStats.close_losses[0].count} défaites serrées`
                 : "0"
             }
             statTooltip="Nombre de matchs perdus 9-10"
-            hasHolder={hasTitleHolder(baseStats.close_losses)}
+            hasHolder={hasTitleHolder(baseStats?.close_losses)}
           />
 
           {/* La Dynastie */}
@@ -569,17 +569,17 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Le Précheur"
             description="Joueur le plus actif"
             holders={
-              baseStats.activity.most_active.length > 0
+              baseStats?.activity?.most_active?.length > 0
                 ? getPlayerPseudos(baseStats.activity.most_active)
                 : "Pas encore de précheur"
             }
             statValue={
-              baseStats.activity.most_active.length > 0
+              baseStats?.activity?.most_active?.length > 0
                 ? `${baseStats.activity.most_active[0].match_count} matchs`
                 : "0"
             }
             statTooltip="Nombre total de matchs joués"
-            hasHolder={hasTitleHolder(baseStats.activity.most_active)}
+            hasHolder={hasTitleHolder(baseStats?.activity?.most_active)}
           />
 
           {/* Le Fantôme */}
@@ -588,17 +588,17 @@ export function SeasonTitles({ month }: SeasonTitlesProps) {
             title="Le Fantôme"
             description="Joueur le moins actif"
             holders={
-              baseStats.activity.least_active.length > 0
+              baseStats?.activity?.least_active?.length > 0
                 ? getPlayerPseudos(baseStats.activity.least_active)
                 : "Pas encore de fantôme"
             }
             statValue={
-              baseStats.activity.least_active.length > 0
+              baseStats?.activity?.least_active?.length > 0
                 ? `${baseStats.activity.least_active[0].match_count} matchs`
                 : "0"
             }
             statTooltip="Nombre total de matchs joués"
-            hasHolder={hasTitleHolder(baseStats.activity.least_active)}
+            hasHolder={hasTitleHolder(baseStats?.activity?.least_active)}
           />
 
           {/* Karadoc */}
