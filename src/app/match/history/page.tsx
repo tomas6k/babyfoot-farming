@@ -35,9 +35,9 @@ interface MatchHistory {
 
 export default function HistoryPage() {
   return (
-    <div className="px-10 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-pixel mb-4">
+    <div className="container py-10">
+      <div className="flex flex-col items-center justify-between mb-4">
+        <h1 className="text-2xl md:text-3xl font-bold font-pixel mb-2 text-center w-full">
           Historique des Matchs
         </h1>
       </div>

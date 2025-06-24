@@ -142,8 +142,8 @@ export function MatchHistory() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-4 items-center">
+    <div className="space-y-4 w-full">
+      <div className="flex flex-col sm:flex-row gap-2 items-center justify-between w-full">
         <Select
           value={selectedPlayer || 'all'}
           onValueChange={(value) => {
@@ -152,7 +152,7 @@ export function MatchHistory() {
           }}
           disabled={playersLoading}
         >
-          <SelectTrigger className="w-[275px]">
+          <SelectTrigger className="w-full sm:w-[275px]">
             <SelectValue placeholder="Filtrer par joueur" />
           </SelectTrigger>
           <SelectContent>
@@ -169,69 +169,67 @@ export function MatchHistory() {
       {isLoading ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-2">Chargement de l'historique...</p>
+          <p className="mt-2 text-sm">Chargement de l'historique...</p>
         </div>
       ) : matches.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 text-sm">
           Aucun match trouvé
         </div>
       ) : (
         <>
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             {matches.map((match, index) => (
-              <Card key={match.id} className="overflow-hidden">
-                <CardHeader className="bg-muted">
-                  <CardTitle className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span>
-                        {format(new Date(match.date), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
-                      </span>
-                      {index === 0 && (
-                        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                              onClick={() => setMatchToDelete(match.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Supprimer le match</DialogTitle>
-                              <DialogDescription>
-                                Êtes-vous sûr de vouloir supprimer ce match ? Cette action restaurera les statistiques des joueurs à leur état avant le match.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <Button
-                                variant="ghost"
-                                onClick={() => setShowDeleteDialog(false)}
-                                disabled={isDeleting}
-                              >
-                                Annuler
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                onClick={() => handleDeleteMatch(match.id)}
-                                disabled={isDeleting}
-                              >
-                                {isDeleting ? "Suppression..." : "Supprimer"}
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      )}
-                    </div>
-                    <span className="text-2xl font-bold">
+              <Card key={match.id} className="overflow-hidden w-full rounded-lg border bg-background shadow-sm">
+                <CardHeader className="bg-muted px-3 py-2">
+                  <CardTitle className="flex flex-col items-center gap-1 w-full">
+                    <span className="text-2xl font-bold text-center w-full">
                       {match.score_white} - {match.score_black}
                     </span>
+                    <span className="text-xs text-muted-foreground text-center w-full">
+                      {format(new Date(match.date), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
+                    </span>
+                    {index === 0 && (
+                      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => setMatchToDelete(match.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Supprimer le match</DialogTitle>
+                            <DialogDescription>
+                              Êtes-vous sûr de vouloir supprimer ce match ? Cette action restaurera les statistiques des joueurs à leur état avant le match.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <Button
+                              variant="ghost"
+                              onClick={() => setShowDeleteDialog(false)}
+                              disabled={isDeleting}
+                            >
+                              Annuler
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleDeleteMatch(match.id)}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? "Suppression..." : "Supprimer"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </CardTitle>
                 </CardHeader>
-                
-                <CardContent className="grid md:grid-cols-2 gap-6 pt-6">
+                <CardContent className="px-3 py-2 text-xs md:text-sm">
+                  <div className="grid md:grid-cols-2 gap-6">
                   {/* Équipe Blanche */}
                   <div className={`p-4 rounded-lg ${match.score_white > match.score_black ? 'bg-green-500/10' : 'bg-gray-500/10'}`}>
                     <h3 className="text-lg font-semibold mb-4">Équipe Blanche (Niv. {match.white_team_level})</h3>
@@ -278,6 +276,7 @@ export function MatchHistory() {
                         {match.black_defender_exp_gained > 0 && (
                           <span className="text-green-500">+{match.black_defender_exp_gained} EXP</span>
                         )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -285,37 +284,30 @@ export function MatchHistory() {
               </Card>
             ))}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
+          {/* Pagination adaptée mobile */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4">
               <Button
                 variant="outline"
+              size="sm"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
+              className="w-full sm:w-auto"
               >
                 Précédent
               </Button>
-              <div className="flex items-center gap-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={page === currentPage ? "default" : "outline"}
-                    onClick={() => handlePageChange(page)}
-                  >
-                    {page}
-                  </Button>
-                ))}
-              </div>
+            <span className="text-xs md:text-sm">
+              Page {currentPage} / {totalPages}
+            </span>
               <Button
                 variant="outline"
+              size="sm"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
+              className="w-full sm:w-auto"
               >
                 Suivant
               </Button>
             </div>
-          )}
         </>
       )}
     </div>

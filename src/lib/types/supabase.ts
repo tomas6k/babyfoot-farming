@@ -413,17 +413,15 @@ export type Database = {
         Returns: undefined
       }
       process_match: {
-        Args:
-          | { match_id: string }
-          | {
-              p_white_attacker: string
-              p_white_defender: string
-              p_black_attacker: string
-              p_black_defender: string
-              p_score_white: number
-              p_score_black: number
-              p_added_by?: string
-            }
+        Args: {
+          p_white_attacker: string
+          p_white_defender: string
+          p_black_attacker: string
+          p_black_defender: string
+          p_score_white: number
+          p_score_black: number
+          p_added_by?: string
+        }
         Returns: {
           player_id: string
           pseudo: string

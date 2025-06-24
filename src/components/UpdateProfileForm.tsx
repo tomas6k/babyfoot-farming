@@ -60,9 +60,9 @@ export function UpdateProfileForm({ currentPseudo, playerId }: UpdateProfileForm
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-xs mx-auto">
       <div className="space-y-2">
-        <Label htmlFor="pseudo">Pseudo</Label>
+        <Label htmlFor="pseudo" className="text-xs md:text-sm">Pseudo</Label>
         <Input
           id="pseudo"
           value={pseudo}
@@ -72,12 +72,13 @@ export function UpdateProfileForm({ currentPseudo, playerId }: UpdateProfileForm
           minLength={3}
           maxLength={20}
           required
+          className="w-full"
         />
-        <p className="text-sm text-gray-500">
+        <p className="text-xs md:text-sm text-gray-500">
           Le pseudo doit contenir entre 3 et 20 caractères
         </p>
       </div>
-      <Button type="submit" disabled={isLoading || pseudo === currentPseudo}>
+      <Button type="submit" disabled={isLoading || pseudo === currentPseudo} className="w-full text-base py-3">
         {isLoading ? "Mise à jour..." : "Mettre à jour"}
       </Button>
     </form>

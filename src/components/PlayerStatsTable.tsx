@@ -115,8 +115,8 @@ export function PlayerStatsTable() {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Classement du mois</h2>
-      <div className="pixel-card p-4">
-        <Table className="pixel-table">
+      <div className="pixel-card p-4 w-full overflow-x-auto rounded-lg border bg-background">
+        <table className="min-w-[600px] w-full text-xs md:text-sm">
           <TableHeader>
             <TableRow>
               <TableHead className="text-left">Position</TableHead>
@@ -206,7 +206,7 @@ export function PlayerStatsTable() {
               );
             })}
           </TableBody>
-        </Table>
+        </table>
       </div>
     </div>
   );

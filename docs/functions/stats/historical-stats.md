@@ -3,19 +3,19 @@
 ## Vue d'ensemble
 
 Cette fonction calcule les statistiques qui nécessitent une analyse temporelle approfondie et des critères spécifiques liés à des périodes ou des motifs de jeu particuliers, notamment :
-1. Le Premier Sang (Premier Match du Lundi)
+1. Le Premier Sang (Premier Match du Jour)
 2. Les Classicos (Affrontements Récurrents)
 3. Le Fidèle (Partenaire Préféré)
 4. Le Casanova (Changement de Partenaires)
-5. Le Dessert (Matchs entre 12h et 14h30 heure francaise)
-6. Le Dessert Looser (Matchs entre 12h et 14h30 heure francaise)
+5. Le Dessert (Matchs entre 12h et 14h30 heure française)
+6. Le Dessert Looser (Matchs entre 12h et 14h30 heure française)
 7. Le Comte de Monte-Cristo (Meilleur Vengeur)
 
-### 1. Le Premier Sang (Premier Match du Lundi)
+### 1. Le Premier Sang (Premier Match du Jour)
 
 #### Critères
-- Premier match de chaque lundi
-- Minimum 2 premiers matchs
+- Prend en compte uniquement le premier match de chaque jour
+- Valide si au minimum 2 premiers matchs sont gagnés
 - Utilisation de taux bayésiens
 - Affiche uniquement le(s) joueur(s) avec le meilleur taux de victoire
 - En cas d'égalité, tous les joueurs ayant le même taux sont affichés
@@ -34,38 +34,39 @@ Cette fonction calcule les statistiques qui nécessitent une analyse temporelle 
 ### 3. Le Fidèle (Partenaire Préféré)
 
 #### Critères
-- Au moins 20 matchs joués sur la période (total pour tous les joueurs)
+- Visible si au moins 20 matchs sont joués sur la période par l'ensemble des joueurs
 - Calcul du taux de fidélité pour tous les joueurs sans minimum de matchs
-- Identification du partenaire favori pour chaque joueur
-- Affiche tous les joueurs avec leur taux de fidélité
-- Tri par taux de fidélité décroissant
-- En cas d'égalité, tri secondaire par nombre de matchs ensemble puis par ID
+- Identification du partenaire favori
+- Affiche le joueur avec le plus haut taux de fidélité
+- En cas d'égalité, tous les joueurs ayant le même taux sont affichés
+- Tri secondaire par nombre de matchs puis par ID
 
 ### 4. Le Casanova (Changement de Partenaires)
 
 #### Critères
-- Au moins 20 matchs joués sur la période (total pour tous les joueurs)
+- Visible si au moins 20 matchs sont joués sur la période par l'ensemble des joueurs
 - Calcul du taux de changement pour tous les joueurs sans minimum de matchs
-- Comptage des partenaires uniques pour chaque joueur
-- Affiche tous les joueurs avec leur taux de changement
+- Comptage des partenaires uniques
+- Affiche le joueur avec le plus haut taux de changement
 - Tri par taux de changement décroissant
-- En cas d'égalité, tri secondaire par nombre de partenaires distincts puis par ID
+- En cas d'égalité, tous les joueurs ayant le même taux sont affichés
+- Tri secondaire par nombre de matchs puis par ID
 
-### 5. Le Dessert (Matchs entre 12h et 14h30 heure francaise)
+### 5. Le Dessert (Matchs entre 12h et 14h30 heure française)
 
 #### Critères
-- Matchs entre 12h et 14h30 heure francaise
-- Minimum 5 matchs sur cette période
+- Matchs entre 12h et 14h30 heure française
+- Visible si au moins 5 matchs sont joués sur la période et la tranche d'heure par l'ensemble des joueurs
 - Utilisation de taux bayésiens
 - Affiche uniquement le(s) joueur(s) avec le meilleur taux de victoire
 - En cas d'égalité, tous les joueurs ayant le même taux sont affichés
 - Tri secondaire par nombre de matchs puis par ID
 
-### 6. Le Dessert Looser (Matchs entre 12h et 14h30 heure francaise)
+### 6. Le Dessert Looser (Matchs entre 12h et 14h30 heure française)
 
 #### Critères
-- Matchs entre 12h et 14h30 heure francaise
-- Minimum 5 matchs sur cette période
+- Matchs entre 12h et 14h30 heure française
+- Visible si au moins 5 matchs sont joués sur la période et la tranche d'heure par l'ensemble des joueurs
 - Utilisation de taux bayésiens basé sur la défaite
 - Affiche uniquement le(s) joueur(s) avec le meilleur taux de défaite
 - En cas d'égalité, tous les joueurs ayant le même taux sont affichés
@@ -75,11 +76,35 @@ Cette fonction calcule les statistiques qui nécessitent une analyse temporelle 
 
 #### Critères
 - Minimum 1 victoire provenant d'une opportunité de revanche
-- Une revanche est considérée comme le match suivant contre la même équipe après une défaite
-- Calcul du taux de revanche réussie avec ajustement bayésien
+- Une revanche est considérée comme valide uniquement si :
+  1. Le joueur a perdu un match
+  2. Le match suivant est contre exactement la même équipe adverse (même paire d'adversaires) et avec le même coéquipier, peu importe la position des joueurs
+  3. Le joueur gagne ce match de revanche
+- Calcul du taux de revanche réussie avec ajustement bayésien : `(revenge_wins + 1) / (revenge_opportunities + 2) * 100`
 - Affiche uniquement le(s) joueur(s) avec le meilleur taux de revanche
 - En cas d'égalité, tous les joueurs ayant le même taux sont affichés
 - Tri secondaire par nombre d'opportunités puis par ID
+
+#### Implémentation technique
+- Utilisation d'arrays PostgreSQL pour stocker et comparer les équipes
+- Normalisation de l'ordre des joueurs dans chaque équipe avec `LEAST` et `GREATEST`
+- Vérification de l'égalité exacte des équipes avec les opérateurs `@>` et `<@`
+- Structure en deux CTEs :
+  1. `revenge_opportunities` : identifie les opportunités de revanche valides
+  2. `revenge_stats` : calcule les statistiques finales
+
+#### Exemple de revanche valide
+```
+Match 1 (perdu):
+- Équipe A : Joueur1 & Joueur2
+- Équipe B : Joueur3 & Joueur4
+- Résultat : Équipe B gagne
+
+Match 2 (revanche):
+- Équipe A : Joueur1 & Joueur2
+- Équipe B : Joueur3 & Joueur4 (même équipe exactement)
+- Résultat : Équipe A gagne
+```
 
 ## Paramètres
 
@@ -106,7 +131,14 @@ SELECT
     CASE 
         WHEN m.score_white > m.score_black THEN true 
         ELSE false 
-    END as white_won
+    END as white_won,
+    m.created_at AT TIME ZONE 'Europe/Paris' as local_date,
+    m.date AT TIME ZONE 'Europe/Paris' as local_game_date,
+    -- Ajout d'un flag pour identifier le premier match du jour
+    ROW_NUMBER() OVER (
+        PARTITION BY DATE_TRUNC('day', m.date AT TIME ZONE 'Europe/Paris')
+        ORDER BY m.date AT TIME ZONE 'Europe/Paris'
+    ) = 1 as is_first_match_of_day
 FROM matches m
 WHERE CASE 
     WHEN target_start_date IS NOT NULL AND target_end_date IS NOT NULL THEN
@@ -192,10 +224,9 @@ interface HistoricalStats {
 
 ## Optimisations
 
-### 1. Table Temporaire
-- Utilisation d'une table temporaire `temp_match_data` pour améliorer les performances
-- La table est automatiquement supprimée à la fin de la transaction
-- Ajout d'un index sur les dates des matchs pour optimiser les calculs de revanche
+### 1. Comptage du Nombre Total de Matchs
+- Utilisation d'une CTE `total_matches_count` pour compter le nombre total de matchs
+- Ce comptage est utilisé pour déterminer si les statistiques "Le Fidèle" et "Le Casanova" doivent être affichées (minimum 20 matchs)
 
 ### 2. Calcul des Taux
 - Utilisation de taux bayésiens : `(victories::float + 1) / (total_matches + 2) * 100`
@@ -206,9 +237,13 @@ interface HistoricalStats {
 - Utilisation de `DENSE_RANK()` pour inclure tous les joueurs/équipes à égalité
 - Tri secondaire par ID pour assurer la cohérence des résultats
 
-### 4. Indexation
-- Index sur les dates pour les matchs du lundi et du déjeuner
-- Index sur les combinaisons de joueurs pour les équipes et partenariats
+### 4. Vérification des Équipes
+- Pour "Le Comte de Monte-Cristo", vérification explicite que le joueur garde le même coéquipier
+- Utilisation de `@>` et `<@` pour vérifier l'égalité exacte des équipes, indépendamment de l'ordre
+
+### 5. Conditions de Visibilité
+- Pour "Le Fidèle" et "Le Casanova", vérification que le nombre total de matchs est d'au moins 20
+- Utilisation d'une condition CASE dans la génération du JSON pour retourner NULL si le nombre de matchs est insuffisant
 
 ## Maintenance
 
@@ -217,80 +252,16 @@ interface HistoricalStats {
 - Les résultats incluent tous les joueurs à égalité pour chaque catégorie
 - Le tri est cohérent et prévisible grâce au tri secondaire par ID
 
-## Backup avant modification
+## Implémentation technique des partenariats
 
-### Implémentation originale de la fonction partnership_stats et fidele_stats
+La fonction `partnership_stats` prend en compte uniquement les partenaires (joueurs de la même équipe) :
 
-```sql
-partnership_stats AS (
-    SELECT 
-        ps.player_id,
-        ps.pseudo,
-        p2.id as partner_id,
-        p2.pseudo as partner_pseudo,
-        COUNT(*) as matches_together,
-        SUM(CASE 
-            WHEN (ps.player_id IN (m.white_attacker, m.white_defender) AND 
-                  p2.id IN (m.white_attacker, m.white_defender) AND 
-                  m.white_won) OR
-                 (ps.player_id IN (m.black_attacker, m.black_defender) AND 
-                  p2.id IN (m.black_attacker, m.black_defender) AND 
-                  NOT m.white_won)
-            THEN 1 
-            ELSE 0 
-        END) as victories_together,
-        COUNT(DISTINCT CASE 
-            WHEN ps.player_id IN (m.white_attacker, m.white_defender) THEN
-                CASE 
-                    WHEN ps.player_id = m.white_attacker THEN m.white_defender
-                    ELSE m.white_attacker
-                END
-            ELSE
-                CASE 
-                    WHEN ps.player_id = m.black_attacker THEN m.black_defender
-                    ELSE m.black_attacker
-                END
-        END) as distinct_partners,
-        ps.total_matches
-    FROM player_stats ps
-    JOIN temp_match_data m ON ps.player_id IN (
-        m.white_attacker, m.white_defender,
-        m.black_attacker, m.black_defender
-    )
-    JOIN players p2 ON p2.id IN (
-        m.white_attacker, m.white_defender,
-        m.black_attacker, m.black_defender
-    ) AND p2.id != ps.player_id
-    GROUP BY ps.player_id, ps.pseudo, p2.id, p2.pseudo, ps.total_matches
-),
-fidele_stats AS (
-    SELECT DISTINCT ON (player_id)
-        player_id,
-        pseudo,
-        partner_id as favorite_partner_id,
-        partner_pseudo as favorite_partner_pseudo,
-        matches_together,
-        victories_together,
-        total_matches,
-        (matches_together::float / total_matches * 100) as fidelity_rate
-    FROM partnership_stats
-    ORDER BY player_id, matches_together DESC
-)
-```
-
-## Correction appliquée
-
-### Nouvelle implémentation de partnership_stats
-
-La fonction `partnership_stats` a été modifiée pour ne prendre en compte que les partenaires (joueurs de la même équipe) et non les adversaires. Voici les principales modifications :
-
-1. Création d'une table temporaire `team_pairs` qui génère explicitement une ligne pour chaque paire de joueurs dans la même équipe
-2. Utilisation de cette table pour joindre les joueurs uniquement avec leurs partenaires
-3. Simplification du calcul des victoires ensemble
-4. Séparation du calcul du nombre de partenaires distincts dans une CTE dédiée
+1. Génération explicite d'une ligne pour chaque paire de joueurs dans la même équipe
+2. Joindre les joueurs uniquement avec leurs partenaires
+3. Calcul des victoires ensemble
+4. Calcul du nombre de partenaires distincts dans une CTE dédiée
 
 ```sql
--- Nouvelle implémentation qui ne prend en compte que les partenaires
 partnership_stats AS (
     SELECT 
         ps.player_id,
@@ -335,7 +306,6 @@ partnership_stats AS (
         (team_pairs.player2_id = ps.player_id AND team_pairs.player1_id = partner.id)
     GROUP BY ps.player_id, ps.pseudo, partner.id, partner.pseudo, ps.total_matches
 ),
--- Compte le nombre total de partenaires distincts pour chaque joueur
 distinct_partners_count AS (
     SELECT
         player_id,
@@ -345,11 +315,7 @@ distinct_partners_count AS (
 )
 ```
 
-Cela garantit que seuls les véritables partenaires sont pris en compte pour les statistiques "Le Fidèle" et "L'esclave", ce qui donne des résultats plus précis.
-
-## Backup
-
-### Stratégie de Sauvegarde
+## Stratégie de Sauvegarde
 - Les statistiques historiques sont calculées à la volée et ne nécessitent pas de sauvegarde directe
 - Les données sources (tables `matches` et `players`) sont sauvegardées quotidiennement par Supabase
 - Les calculs temporels sont reconstruits à chaque appel, assurant leur exactitude
@@ -365,16 +331,12 @@ Cela garantit que seuls les véritables partenaires sont pris en compte pour les
 - S'assurer que tous les matchs ont été correctement restaurés pour maintenir la précision des statistiques
 - Pour les revanches, l'ordre chronologique des matchs est crucial
 
-## Code Source
+## Code Source Actuel
 
 ```sql
-CREATE OR REPLACE FUNCTION public.get_historical_stats(
-    p_target_player_id uuid DEFAULT NULL::uuid, 
-    p_target_start_date timestamp with time zone DEFAULT NULL::timestamp with time zone, 
-    p_target_end_date timestamp with time zone DEFAULT NULL::timestamp with time zone
-)
-RETURNS jsonb
-LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION public.get_historical_stats(p_target_player_id uuid DEFAULT NULL::uuid, p_target_start_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_target_end_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+ RETURNS jsonb
+ LANGUAGE plpgsql
 AS $function$
 DECLARE
     result jsonb;
@@ -387,7 +349,12 @@ BEGIN
                 ELSE false 
             END as white_won,
             m.created_at AT TIME ZONE 'Europe/Paris' as local_date,
-            m.date AT TIME ZONE 'Europe/Paris' as local_game_date
+            m.date AT TIME ZONE 'Europe/Paris' as local_game_date,
+            -- Flag pour identifier le premier match du jour
+            ROW_NUMBER() OVER (
+                PARTITION BY DATE_TRUNC('day', m.date AT TIME ZONE 'Europe/Paris')
+                ORDER BY m.date AT TIME ZONE 'Europe/Paris'
+            ) = 1 as is_first_match_of_day
         FROM matches m
         WHERE (p_target_start_date IS NULL OR m.created_at >= p_target_start_date)
         AND (p_target_end_date IS NULL OR m.created_at < p_target_end_date)
@@ -398,7 +365,23 @@ BEGIN
             ))
         ORDER BY m.created_at
     ),
-    -- Premier match du lundi avec gestion des égalités
+    -- Comptage du nombre total de matchs pour la période
+    total_matches_count AS (
+        SELECT COUNT(*) as total_match_count
+        FROM temp_match_data
+    ),
+    -- Comptage du nombre de matchs à l'heure du déjeuner
+    lunch_matches_count AS (
+        SELECT COUNT(*) as lunch_match_count
+        FROM temp_match_data
+        WHERE EXTRACT(HOUR FROM local_game_date) BETWEEN 12 AND 14
+        AND (
+            EXTRACT(HOUR FROM local_game_date) < 14 OR
+            (EXTRACT(HOUR FROM local_game_date) = 14 AND
+             EXTRACT(MINUTE FROM local_game_date) <= 30)
+        )
+    ),
+    -- Premier match du jour avec gestion des égalités
     first_blood_stats AS (
         SELECT 
             p.id as player_id,
@@ -427,11 +410,15 @@ BEGIN
             m.white_attacker, m.white_defender,
             m.black_attacker, m.black_defender
         )
-        WHERE EXTRACT(DOW FROM m.local_game_date) = 1  -- 1 = Lundi dans PostgreSQL
+        WHERE m.is_first_match_of_day -- Uniquement les premiers matchs du jour
         GROUP BY p.id, p.pseudo
-        HAVING COUNT(*) >= 1
+        HAVING SUM(CASE -- Minimum 2 premiers matchs gagnés
+            WHEN p.id IN (m.white_attacker, m.white_defender) AND m.white_won THEN 1
+            WHEN p.id IN (m.black_attacker, m.black_defender) AND NOT m.white_won THEN 1
+            ELSE 0
+        END) >= 2
     ),
-    -- Dessert avec gestion des égalités
+    -- Dessert avec gestion des égalités - Modifié pour supprimer le minimum par joueur
     dessert_stats AS (
         SELECT 
             p.id as player_id,
@@ -467,9 +454,9 @@ BEGIN
              EXTRACT(MINUTE FROM m.local_game_date) <= 30)
         )
         GROUP BY p.id, p.pseudo
-        HAVING COUNT(*) >= 2
+        -- Plus de HAVING COUNT(*) >= 5
     ),
-    -- Dessert looser avec gestion des égalités
+    -- Dessert looser avec gestion des égalités - Modifié pour supprimer le minimum par joueur
     dessert_looser_stats AS (
         SELECT 
             p.id as player_id,
@@ -505,8 +492,9 @@ BEGIN
              EXTRACT(MINUTE FROM m.local_game_date) <= 30)
         )
         GROUP BY p.id, p.pseudo
-        HAVING COUNT(*) >= 2
+        -- Plus de HAVING COUNT(*) >= 5
     ),
+    -- Statistiques joueurs sans minimum de matchs
     player_stats AS (
         SELECT 
             p.id as player_id,
@@ -524,7 +512,7 @@ BEGIN
             m.black_attacker, m.black_defender
         )
         GROUP BY p.id, p.pseudo
-        HAVING COUNT(*) >= 10
+        -- Pas de minimum de matchs requis
     ),
     partnership_stats AS (
         SELECT 
@@ -636,56 +624,92 @@ BEGIN
             ) as rnk
         FROM team_matches
         GROUP BY t1p1, t1p2, t2p1, t2p2
-        HAVING COUNT(*) >= 5
+        HAVING COUNT(*) >= 5 -- Minimum 5 matchs entre les mêmes équipes
     ),
-    -- Le Comte de Monte-Cristo (revenge_stats) avec ajout du classement
-    revenge_stats AS (
+    -- Le Comte de Monte-Cristo avec vérification améliorée
+    revenge_opportunities AS (
         SELECT 
+            m.id as match_id,
+            m.created_at,
             p.id as player_id,
             p.pseudo,
-            COUNT(*) as revenge_opportunities,
-            SUM(CASE 
+            -- Stocke les équipes du match actuel
+            CASE 
+                WHEN p.id IN (m.white_attacker, m.white_defender) THEN 
+                    ARRAY[LEAST(m.white_attacker, m.white_defender), GREATEST(m.white_attacker, m.white_defender)]
+                ELSE 
+                    ARRAY[LEAST(m.black_attacker, m.black_defender), GREATEST(m.black_attacker, m.black_defender)]
+            END as player_team,
+            CASE 
+                WHEN p.id IN (m.white_attacker, m.white_defender) THEN 
+                    ARRAY[LEAST(m.black_attacker, m.black_defender), GREATEST(m.black_attacker, m.black_defender)]
+                ELSE 
+                    ARRAY[LEAST(m.white_attacker, m.white_defender), GREATEST(m.white_attacker, m.white_defender)]
+            END as opponent_team,
+            -- Stocke les équipes du match précédent
+            CASE 
+                WHEN p.id IN (prev.white_attacker, prev.white_defender) THEN 
+                    ARRAY[LEAST(prev.white_attacker, prev.white_defender), GREATEST(prev.white_attacker, prev.white_defender)]
+                ELSE 
+                    ARRAY[LEAST(prev.black_attacker, prev.black_defender), GREATEST(prev.black_attacker, prev.black_defender)]
+            END as prev_player_team,
+            CASE 
+                WHEN p.id IN (prev.white_attacker, prev.white_defender) THEN 
+                    ARRAY[LEAST(prev.black_attacker, prev.black_defender), GREATEST(prev.black_attacker, prev.black_defender)]
+                ELSE 
+                    ARRAY[LEAST(prev.white_attacker, prev.white_defender), GREATEST(prev.white_attacker, prev.white_defender)]
+            END as prev_opponent_team,
+            -- Détermine si le joueur a gagné la revanche
+            CASE 
                 WHEN (p.id IN (m.white_attacker, m.white_defender) AND m.white_won) OR
                      (p.id IN (m.black_attacker, m.black_defender) AND NOT m.white_won)
                 THEN 1 
                 ELSE 0 
-            END) as revenge_wins,
-            (SUM(CASE 
-                WHEN (p.id IN (m.white_attacker, m.white_defender) AND m.white_won) OR
-                     (p.id IN (m.black_attacker, m.black_defender) AND NOT m.white_won)
-                THEN 1 
-                ELSE 0 
-            END)::FLOAT + 1) / (COUNT(*) + 2) * 100 as revenge_rate,
-            DENSE_RANK() OVER (
-                ORDER BY (SUM(CASE 
-                    WHEN (p.id IN (m.white_attacker, m.white_defender) AND m.white_won) OR
-                         (p.id IN (m.black_attacker, m.black_defender) AND NOT m.white_won)
-                    THEN 1 
-                    ELSE 0 
-                END)::FLOAT + 1) / (COUNT(*) + 2) DESC,
-                COUNT(*) DESC
-            ) as rnk
+            END as won_revenge
         FROM temp_match_data m
         JOIN players p ON p.id IN (
             m.white_attacker, m.white_defender,
             m.black_attacker, m.black_defender
         )
-        WHERE EXISTS (
-            SELECT 1 
-            FROM temp_match_data prev
-            WHERE prev.created_at < m.created_at
+        JOIN temp_match_data prev ON prev.created_at < m.created_at
+        WHERE 
+            -- Vérifie que c'est le match immédiatement précédent
+            prev.created_at = (
+                SELECT MAX(created_at)
+                FROM temp_match_data prev2
+                WHERE prev2.created_at < m.created_at
+            )
+            -- Vérifie que le joueur a perdu le match précédent
             AND (
                 (p.id IN (prev.white_attacker, prev.white_defender) AND NOT (prev.score_white > prev.score_black))
                 OR 
                 (p.id IN (prev.black_attacker, prev.black_defender) AND (prev.score_white > prev.score_black))
             )
-            AND prev.created_at = (
-                SELECT MAX(created_at)
-                FROM temp_match_data prev2
-                WHERE prev2.created_at < m.created_at
+    ),
+    revenge_stats AS (
+        SELECT 
+            player_id,
+            pseudo,
+            COUNT(*) as revenge_opportunities,
+            SUM(won_revenge) as revenge_wins,
+            (SUM(won_revenge)::FLOAT + 1) / (COUNT(*) + 2) * 100 as revenge_rate,
+            DENSE_RANK() OVER (
+                ORDER BY (SUM(won_revenge)::FLOAT + 1) / (COUNT(*) + 2) DESC,
+                COUNT(*) DESC
+            ) as rnk
+        FROM revenge_opportunities ro
+        WHERE 
+            -- Vérifie que c'est contre la même équipe adverse
+            (
+                ro.opponent_team @> ro.prev_opponent_team 
+                AND ro.opponent_team <@ ro.prev_opponent_team
             )
-        )
-        GROUP BY p.id, p.pseudo
+            -- Vérifie que le joueur a le même coéquipier
+            AND (
+                ro.player_team @> ro.prev_player_team
+                AND ro.player_team <@ ro.prev_player_team
+            )
+        GROUP BY player_id, pseudo
         HAVING COUNT(*) >= 1
     )
     SELECT jsonb_build_object(
@@ -704,61 +728,81 @@ BEGIN
             WHERE fb.rnk = 1
         ),
         'dessert', (
-            SELECT jsonb_agg(
-                jsonb_build_object(
-                    'player_id', ds.player_id,
-                    'pseudo', ds.pseudo,
-                    'total_matches', ds.total_matches,
-                    'victories', ds.victories,
-                    'win_rate', ds.win_rate
-                )
-                ORDER BY ds.win_rate DESC, ds.total_matches DESC, ds.player_id
-            )
+            -- Ajoute condition de 5 matchs minimum sur la période du déjeuner
+            SELECT CASE
+                WHEN (SELECT lunch_match_count FROM lunch_matches_count) >= 5 THEN
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'player_id', ds.player_id,
+                            'pseudo', ds.pseudo,
+                            'total_matches', ds.total_matches,
+                            'victories', ds.victories,
+                            'win_rate', ds.win_rate
+                        )
+                        ORDER BY ds.win_rate DESC, ds.total_matches DESC, ds.player_id
+                    )
+                ELSE NULL
+            END
             FROM dessert_stats ds
             WHERE ds.rnk = 1
         ),
         'dessert_looser', (
-            SELECT jsonb_agg(
-                jsonb_build_object(
-                    'player_id', dl.player_id,
-                    'pseudo', dl.pseudo,
-                    'total_matches', dl.total_matches,
-                    'defeats', dl.defeats,
-                    'loss_rate', dl.loss_rate
-                )
-                ORDER BY dl.loss_rate DESC, dl.total_matches DESC, dl.player_id
-            )
+            -- Ajoute condition de 5 matchs minimum sur la période du déjeuner
+            SELECT CASE
+                WHEN (SELECT lunch_match_count FROM lunch_matches_count) >= 5 THEN
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'player_id', dl.player_id,
+                            'pseudo', dl.pseudo,
+                            'total_matches', dl.total_matches,
+                            'defeats', dl.defeats,
+                            'loss_rate', dl.loss_rate
+                        )
+                        ORDER BY dl.loss_rate DESC, dl.total_matches DESC, dl.player_id
+                    )
+                ELSE NULL
+            END
             FROM dessert_looser_stats dl
             WHERE dl.rnk = 1
         ),
         'fidele', (
-            SELECT jsonb_agg(
-                jsonb_build_object(
-                    'player_id', fs.player_id,
-                    'pseudo', fs.pseudo,
-                    'favorite_partner_id', fs.favorite_partner_id,
-                    'favorite_partner_pseudo', fs.favorite_partner_pseudo,
-                    'matches_together', fs.matches_together,
-                    'victories_together', fs.victories_together,
-                    'total_matches', fs.total_matches,
-                    'fidelity_rate', fs.fidelity_rate
-                )
-                ORDER BY fs.fidelity_rate DESC, fs.matches_together DESC, fs.player_id
-            )
+            -- Condition de 20 matchs minimum sur la période
+            SELECT CASE
+                WHEN (SELECT total_match_count FROM total_matches_count) >= 20 THEN
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'player_id', fs.player_id,
+                            'pseudo', fs.pseudo,
+                            'favorite_partner_id', fs.favorite_partner_id,
+                            'favorite_partner_pseudo', fs.favorite_partner_pseudo,
+                            'matches_together', fs.matches_together,
+                            'victories_together', fs.victories_together,
+                            'total_matches', fs.total_matches,
+                            'fidelity_rate', fs.fidelity_rate
+                        )
+                        ORDER BY fs.fidelity_rate DESC, fs.matches_together DESC, fs.player_id
+                    )
+                ELSE NULL
+            END
             FROM fidele_stats fs
             WHERE fs.rnk = 1
         ),
         'casanova', (
-            SELECT jsonb_agg(
-                jsonb_build_object(
-                    'player_id', cs.player_id,
-                    'pseudo', cs.pseudo,
-                    'distinct_partners', cs.distinct_partners,
-                    'total_matches', cs.total_matches,
-                    'partner_change_rate', cs.partner_change_rate
-                )
-                ORDER BY cs.partner_change_rate DESC, cs.distinct_partners DESC, cs.player_id
-            )
+            -- Condition de 20 matchs minimum sur la période
+            SELECT CASE
+                WHEN (SELECT total_match_count FROM total_matches_count) >= 20 THEN
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'player_id', cs.player_id,
+                            'pseudo', cs.pseudo,
+                            'distinct_partners', cs.distinct_partners,
+                            'total_matches', cs.total_matches,
+                            'partner_change_rate', cs.partner_change_rate
+                        )
+                        ORDER BY cs.partner_change_rate DESC, cs.distinct_partners DESC, cs.player_id
+                    )
+                ELSE NULL
+            END
             FROM casanova_stats cs
             WHERE cs.rnk = 1
         ),
@@ -808,4 +852,4 @@ BEGIN
 
     RETURN result;
 END;
-$function$; 
+$function$

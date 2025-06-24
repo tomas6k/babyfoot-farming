@@ -141,7 +141,7 @@ export function NewMatchForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 grid-cols-1">
         {/* Équipe blanche */}
         <Card className="pixel-card">
           <CardHeader>
@@ -155,7 +155,7 @@ export function NewMatchForm() {
                 onValueChange={(value) => handlePlayerSelection("whiteAttacker", value)}
                 required
               >
-                <SelectTrigger className="pixel-select">
+                <SelectTrigger className="pixel-select min-w-0 w-full" >
                   <SelectValue placeholder="Sélectionner un joueur" />
                 </SelectTrigger>
                 <SelectContent className="pixel-select-content">
@@ -170,7 +170,7 @@ export function NewMatchForm() {
                 onValueChange={(value) => handlePlayerSelection("whiteDefender", value)}
                 required
               >
-                <SelectTrigger className="pixel-select">
+                <SelectTrigger className="pixel-select min-w-0 w-full">
                   <SelectValue placeholder="Sélectionner un joueur" />
                 </SelectTrigger>
                 <SelectContent className="pixel-select-content">
@@ -189,12 +189,11 @@ export function NewMatchForm() {
                   setScores({ ...scores, white: parseInt(e.target.value) || 0 })
                 }
                 required
-                className="pixel-input"
+                className="pixel-input min-w-0 w-full"
               />
             </div>
           </CardContent>
         </Card>
-
         {/* Équipe noire */}
         <Card className="pixel-card">
           <CardHeader>
@@ -208,7 +207,7 @@ export function NewMatchForm() {
                 onValueChange={(value) => handlePlayerSelection("blackAttacker", value)}
                 required
               >
-                <SelectTrigger className="pixel-select">
+                <SelectTrigger className="pixel-select min-w-0 w-full">
                   <SelectValue placeholder="Sélectionner un joueur" />
                 </SelectTrigger>
                 <SelectContent className="pixel-select-content">
@@ -223,7 +222,7 @@ export function NewMatchForm() {
                 onValueChange={(value) => handlePlayerSelection("blackDefender", value)}
                 required
               >
-                <SelectTrigger className="pixel-select">
+                <SelectTrigger className="pixel-select min-w-0 w-full">
                   <SelectValue placeholder="Sélectionner un joueur" />
                 </SelectTrigger>
                 <SelectContent className="pixel-select-content">
@@ -242,34 +241,29 @@ export function NewMatchForm() {
                   setScores({ ...scores, black: parseInt(e.target.value) || 0 })
                 }
                 required
-                className="pixel-input"
+                className="pixel-input min-w-0 w-full"
               />
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Section des avertissements */}
+      {/* Warnings et bouton */}
+      <div className="flex flex-col gap-4 items-center w-full">
       {getPlayerWarnings().length > 0 && (
-        <div className="bg-yellow-900/20 border border-yellow-900/50 rounded-lg p-4 space-y-2">
-          <h3 className="font-semibold text-yellow-500">Avertissements :</h3>
-          <ul className="list-disc list-inside space-y-1">
-            {getPlayerWarnings().map((warning) => (
-              <li key={warning.playerId} className="text-yellow-500">
-                {warning.pseudo} : {warning.warnings.join(", ")}
-              </li>
+          <div className="w-full bg-yellow-100 text-yellow-800 rounded p-2 text-xs md:text-sm">
+            {getPlayerWarnings().map((w) => (
+              <div key={w.playerId}>
+                <span className="font-bold">{w.pseudo} :</span> {w.warnings.join(", ")}
+              </div>
             ))}
-          </ul>
         </div>
       )}
-
-      <div className="flex justify-end">
         <Button
           type="submit"
-          className="pixel-button"
           disabled={isLoading}
+          className="w-full md:w-auto text-base py-3 px-6"
         >
-          {isLoading ? "Enregistrement..." : "Enregistrer le match"}
+          {isLoading ? "Enregistrement..." : "Valider le match"}
         </Button>
       </div>
     </form>

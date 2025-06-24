@@ -370,8 +370,8 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
   }
 
   return (
-    <div className="w-full overflow-x-auto">
-      <Table className="w-full">
+    <div className="w-full overflow-x-auto rounded-lg shadow-sm border bg-background">
+      <table className="min-w-[600px] w-full text-xs md:text-sm">
       <TableHeader>
         <TableRow>
             <TableHead className="w-12 px-6">#</TableHead>
@@ -567,7 +567,7 @@ export function LeaderboardTable({ period = getCurrentMonth(), stats = [] }: Lea
           );
         })}
       </TableBody>
-    </Table>
+      </table>
     </div>
   );
 } 
